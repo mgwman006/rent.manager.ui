@@ -9,11 +9,27 @@ type RentalProfileContextType = {
 
 const RentalProfileContext = createContext<RentalProfileContextType | undefined>(undefined);
 
-const loadInitialState = (): RentalProfileState => ({
-  rentalProfile: null,
-  loading: false,
-  error: null,
-});
+const loadInitialState = (): RentalProfileState => {
+  try {
+    const stored = localStorage.getItem("rentalProfileState");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        rentalProfile: parsed.rentalProfile ?? null,
+        loading: false,
+        error: parsed.error ?? null,
+      };
+    }
+  } catch (error) {
+    console.error("Failed to load rental profile state", error);
+  }
+
+  return {
+    rentalProfile: null,
+    loading: false,
+    error: null,
+  };
+};
 
 export const RentalProfileProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(rentalProfileReducer, undefined, loadInitialState);

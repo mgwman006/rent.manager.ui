@@ -43,18 +43,14 @@ export default function Dashboard() {
     const jwtToken = accountState.accountDetails?.token;
     const currentProfile = rentalProfileState.rentalProfile;
 
-    if (!jwtToken) {
+    if (!jwtToken || !currentProfile) {
       navigate("/");
       return;
     }
 
-    if (!currentProfile) {
-      navigate("/");
-      return;
-    }
 
     setRentalProfile(currentProfile);
-    loadLeasesCount(currentProfile.id, jwtToken);
+    loadLeasesCount(currentProfile.id, jwtToken!);
   }, [rentalProfileState.rentalProfile, accountState.accountDetails?.token, navigate, notificationApi]);
 
   return (
