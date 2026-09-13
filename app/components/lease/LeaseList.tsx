@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { leaseApi } from "../../api/api";
 import { useAccount } from "../../store/account/AccountContext";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
 const { Meta } = Card;
 const { Title, Text } = Typography;
 
@@ -17,20 +18,16 @@ export default function LeaseList(){
     const [leasesLoading, setLeasesLoading] = useState(false);
     const [createLeaseModalVisible, setCreateLeaseModalVisible] = useState(false);
     const [displayCount, setDisplayCount] = useState<number>(5);
-    const [loading, setLoading] = useState(false);
     const [notificationApi, contextHolder] = notification.useNotification();
     const { accountState } = useAccount();
-    const { rentalProfileId } = useOutletContext<{ rentalProfileId: number }>();
+    const { rentalProfileState } = useRentalProfile();
     const token = accountState.accountDetails?.token ?? "";
 
 
     const loadMore = () => setDisplayCount((c) => c + 5);
 
 
-    const loadLeases = async () => {
-        if (!token || Number.isNaN(rentalProfileId)) {
-          return;
-        }
+    const loadLeases = async (rentalProfileId:number) => {
     
         setLeasesLoading(true);
         try {
@@ -45,48 +42,46 @@ export default function LeaseList(){
 
     const handleCreateLease = async (values: LeaseCreateDTO) => 
     {
-        if (!token || Number.isNaN(rentalProfileId)) {
-        notificationApi.error({
-            message: "Authentication Required",
-            description: "Please sign in again to create a lease.",
-        });
-        return;
+        const rentalProfileId = rentalProfileState.rentalProfile?.id;
+        if (!token || !rentalProfileId) {
+            notificationApi.error({
+                message: "Authentication Required",
+                description: "Please sign in again to create a lease.",
+            });
+            return;
         }
 
         try 
         {
-        const newLease: LeaseCreateDTO = {
-            ...values,
-            rentalProfileId: rentalProfileId,
-        };
+            const newLease: LeaseCreateDTO = {
+                ...values,
+                rentalProfileId: rentalProfileId,
+            };
 
-        const response = await leaseApi.createLease(newLease, token);
+            const response = await leaseApi.createLease(newLease, token);
 
-        notificationApi.success({
-            message: "Lease Created",
-            description: "The lease has been successfully created.",
-        });
-        setCreateLeaseModalVisible(false);
-        loadLeases(); // Refresh the leases list
+        
+            setCreateLeaseModalVisible(false);
+            loadLeases(rentalProfileId); // Refresh the leases list
+            notificationApi.success({
+                message: "Lease Created",
+                description: "The lease has been successfully created.",
+            });
         } catch (error: any) {
-        notificationApi.error({
-            message: "Failed to create lease",
-            description: error?.message ?? "Unable to create lease.",
-        });
+            notificationApi.error({
+                message: error.message ?? "Failed to create lease",
+                description: error?.data ?? "Unable to create lease.",
+            });
         }
     };
 
    useEffect(() => {
-        loadLeases();
-    }, []);
-
-if (loading) {
-    return (
-      <div style={{ textAlign: "center", paddingTop: 50 }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
+        const rentalProfileId = rentalProfileState.rentalProfile?.id;
+        if (!token || !rentalProfileId) {
+            return;
+        }
+        loadLeases(rentalProfileId);
+    }, [token, rentalProfileState.rentalProfile, notificationApi]);
 
     return (
         <div>
@@ -148,7 +143,7 @@ if (loading) {
                 placement="right"
                 open={createLeaseModalVisible}
                 onClose={() => setCreateLeaseModalVisible(false)}
-                width={520}
+                size="large"
                 extra={
                     <Button onClick={() => setCreateLeaseModalVisible(false)}>Cancel</Button>
                 }

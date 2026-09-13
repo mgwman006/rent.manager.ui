@@ -14,6 +14,18 @@ export interface RentalProfileDetailsDTO
   rentalUnits: RentalUnitDetailsDTO[];
 }
 
+export type RentalProfileState = {
+  rentalProfile: RentalProfileDetailsDTO | null;
+  loading: boolean;
+  error: string | null;
+};
+
+export type RentalProfileAction =
+  | { type: "SET_RENTAL_PROFILE"; payload: RentalProfileDetailsDTO | null }
+  | { type: "CLEAR_RENTAL_PROFILE" }
+  | { type: "FETCH_START" }
+  | { type: "FETCH_ERROR"; payload: string };
+
 export interface RentalUnitDetailsDTO
 {
   id: number;

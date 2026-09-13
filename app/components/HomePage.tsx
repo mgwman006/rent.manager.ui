@@ -9,6 +9,7 @@ import { rentalProfileApi } from "../api/api";
 import { handleApiError } from "../utilities/error-handler";
 import { RentalProfileDetailsDTO } from "../models/rentalprofile";
 import CreateRentalProfile from "./rentalprofile/CreateRentalProfile";
+import { useRentalProfile } from "../store/rentalprofile/RentalProfileContext";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -56,11 +57,12 @@ export default function HomePage()
   const [notificationApi, contextHolder] = notification.useNotification();
   const { accountState, dispatchAccountState } = useAccount();
   const [rentalProfiles, setRentalProfiles] = useState<RentalProfileDetailsDTO[]>([]);
-  const [form] = Form.useForm();
   const navigate = useNavigate();
+  const { dispatchRentalProfileState } = useRentalProfile();
+  
 
 
-   const getRentalProfiles = async (userId: number, organizationId: number, token?: string) => {
+  const getRentalProfiles = async (userId: number, organizationId: number, token?: string) => {
     try 
     {
       if (!token) 
@@ -92,6 +94,14 @@ export default function HomePage()
     const url = `${authUrl}?outGoingUrl=${encodeURIComponent(outGoingUrlValue)}&phoneNumber=${encodeURIComponent("")}`;
     window.location.href = url;
   };
+
+  const navigateToRentalProfile = (profile: RentalProfileDetailsDTO) => {
+    dispatchRentalProfileState({
+      type: "SET_RENTAL_PROFILE",
+      payload: profile,
+    });
+    navigate(`/rental-profile`);
+  }
 
   useEffect(() => {
     if (!accountStateString) {
@@ -149,7 +159,7 @@ export default function HomePage()
                 key={profile.id}
                 style={{ marginBottom: "10px", cursor: "pointer" }}
                 hoverable
-                onClick={() => {navigate(`/rental-profile/${profile.id}`);}}
+                onClick={() => {navigateToRentalProfile(profile)}}
               >
                 <Row gutter={16}>
                   <Col span={12}>
