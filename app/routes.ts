@@ -4,14 +4,15 @@ import RentalProfilePage from "./components/rentalprofile/RentalProfilePage";
 import LeaseDashboard from "./components/lease/LeasesDashboard";
 import LeaseList from "./components/lease/LeaseList";
 import LeaseDetails from "./components/lease/LeaseDetails";
+import PropertiesDashboard from "./components/properties/PropertiesDashboard";
 const routes = [
   {
     path: "/",
     Component: Home,
     children: [
       {
-        path:"",
-        Component: HomePage
+        path: "",
+        Component: HomePage,
       },
       {
         path: "rental-profile/:id",
@@ -30,6 +31,10 @@ const routes = [
                 Component:LeaseDetails
               }
             ]
+          },
+          {
+            path: "properties",
+            Component: PropertiesDashboard,
           }
         ]
       }

@@ -1,4 +1,4 @@
-import { Card, Col, Drawer, Flex, Row, Button, Tag, Descriptions, Space, Listy, notification, Spin, Result, Badge, Alert, Modal, Form, InputNumber, Input } from "antd";
+import { Card, Col, Drawer, Flex, Row, Button, Tag, Descriptions, Space, Listy, notification, Spin, Result, Badge, Alert, Modal, Form, InputNumber, Input, Avatar } from "antd";
 import { UserOutlined, CalendarOutlined, DollarOutlined, FieldTimeOutlined, EditFilled, PlusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import { Typography } from "antd";
 import { useEffect, useState } from "react";
@@ -109,9 +109,9 @@ export default function LeaseDetails()
                                 {
                                     leaseDetails.tenant != null ? (
                                         <Meta
-                                            avatar={<UserOutlined style={{ fontSize: '25px' }} />}
+                                            avatar={<Avatar size={52}><UserOutlined style={{ fontSize: '25px' }} /></Avatar>}
                                             title={leaseDetails.tenant?.firstName && leaseDetails.tenant?.lastName ? `${leaseDetails.tenant.firstName} ${leaseDetails.tenant.lastName}` : "No Tenant Assigned"}
-                                            description={`${leaseDetails.tenant?.email ?? "No Email Provided"} | ${leaseDetails.tenant?.phoneNumber ?? "No Phone Provided"}`}
+                                            description={`${leaseDetails.tenant?.phoneNumber ?? "No Phone Provided"}`}
                                         />
 
                                     ):(
