@@ -6,6 +6,7 @@ import LeaseList from "./components/lease/LeaseList";
 import LeaseDetails from "./components/lease/LeaseDetails";
 import PropertiesDashboard from "./components/properties/PropertiesDashboard";
 import Dashboard from "./components/rentalprofile/Dashbord";
+import InvitationDetails from "./components/invitation/InvitationDetails";
 const routes = [
   {
     path: "/",
@@ -36,6 +37,10 @@ const routes = [
                 Component:LeaseDetails
               }
             ]
+          },
+          {
+            path: "invitations/:invitationToken",
+            Component: InvitationDetails,
           },
           {
             path: "properties",

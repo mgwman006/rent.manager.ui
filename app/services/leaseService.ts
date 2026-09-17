@@ -8,7 +8,7 @@ export const getLeases = async (rentalProfileId:number, jwtToken:string, notific
         const data = await leaseApi.getLeasesByRentalProfile(rentalProfileId, jwtToken);
         return data ?? [];
     } catch (error: any) {
-        notificationApi.error({ message: "Failed to load leases", description: error?.message ?? "" });
+        notificationApi.error({ message: error.message ?? "Failed to load leases", description: error?.data ?? "can not retrieve errror description" });
         return [];
     }
 }

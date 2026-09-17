@@ -19,6 +19,8 @@ const loadInitialState = (): RentalProfileState => {
         loading: false,
         error: parsed.error ?? null,
       };
+    }else{
+      console.log("no stored user state")
     }
   } catch (error) {
     console.error("Failed to load rental profile state", error);

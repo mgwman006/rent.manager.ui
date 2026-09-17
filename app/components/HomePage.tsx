@@ -105,6 +105,17 @@ export default function HomePage()
 
   useEffect(() => {
     if (!accountStateString) {
+      const accountDetails = accountState.accountDetails;
+
+      if (accountDetails && !isTokenExpired(accountDetails.token)) {
+        getRentalProfiles(
+          accountDetails.userDetails?.id as number,
+          accountDetails.userDetails?.memberships[0]?.organizationId as number,
+          accountDetails.token
+        );
+        return;
+      }
+
       navigateToAuth();
       return;
     }

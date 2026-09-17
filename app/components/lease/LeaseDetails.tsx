@@ -6,7 +6,8 @@ import { LeaseDetailsDTO } from "../../models/lease";
 import { TenantInvitationCreateDTO, TenantInvitationDetailsDTO } from "../../models/user";
 import { useParams } from "react-router-dom";
 import { useAccount } from "../../store/account/AccountContext";
-import { leaseApi, tenantInvitationApi } from "../../api/api";
+import { leaseApi, leaseInvitationApi } from "../../api/api";
+import { sentInvite } from "../../services/invitationService";
 const { Text } = Typography;
 const { Meta } = Card;
 
@@ -41,15 +42,11 @@ export default function LeaseDetails()
 
         try
         {
-            const res = await tenantInvitationApi.create(formValues,token);
-            leaseDetails?.tenantInvitations?.push(res);
-        }
-        catch(error : any)
-        {
-            notificationApi.error({
-            message: error.message ?? "Failed to send Invitation",
-            description: error.data ?? "Unable to fetch lease details.",
-          });
+            const res = await sentInvite(formValues,token,notificationApi);
+            if(res)
+            {
+              leaseDetails?.tenantInvitations?.push(res);
+            }
         }
         finally
         {

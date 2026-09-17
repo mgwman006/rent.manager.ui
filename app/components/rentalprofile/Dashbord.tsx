@@ -1,18 +1,23 @@
 import {
   ArrowRightOutlined,
   BankOutlined,
+  BellOutlined,
   BookOutlined,
   HomeOutlined,
   HomeTwoTone,
+  RightOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
-import { Avatar, Card, Col, notification, Progress, Row, Tag, Typography } from "antd";
+import { Avatar, Badge, Card, Col, Flex, Modal, notification, Progress, Row, Tag, Typography } from "antd";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
 import { RentalProfileDetailsDTO } from "../../models/rentalprofile";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { getLeases } from "../../services/leaseService";
 import { useAccount } from "../../store/account/AccountContext";
+import Invitations from "../invitation/Invitations";
+import { getActiveInvitations } from "../../services/invitationService";
+import { TenantInvitationDetailsDTO } from "../../models/user";
 
 const { Meta } = Card;
 const { Title, Text } = Typography;
@@ -25,10 +30,30 @@ export default function Dashboard() {
   const [notificationApi, contextHolder] = notification.useNotification();
   const [rentalProfile, setRentalProfile] = useState<RentalProfileDetailsDTO | null>(null);
   const [leaseCount, setLeaseCount] = useState(0);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [invitesCount,setInvitesCount] = useState<number>(0);
+  const [invitations, setInvitations] = useState<TenantInvitationDetailsDTO[]>([]);
+
 
   
   const summaryCards = [
-    { title: "Leases", value: leaseCount, icon: <BookOutlined />, color: "#a78bfa" },
+    { 
+      title: "Leases", 
+      value: leaseCount, 
+      icon: <BookOutlined />, 
+      color: "#F7FFF2" ,
+      onClick: () => {},
+    },
+    {
+      title: "Invitations",
+      value: `You have ${invitesCount} invitaions to respond`,
+      icon: <Badge count={invitesCount}><BellOutlined /></Badge>,    
+      color: "#EDF4FF",
+      buttonStyle: { backgroundColor: "info", borderColor: "#EDF4FF", color: "#fff" },
+      buttonText: "View more",
+      buttonIcon: <ArrowRightOutlined />,
+      onClick: () => setIsInviteModalOpen(true),
+    },
     //   { title: "Tenants", value: 0, icon: <TeamOutlined />, color: "#f59e0b" },
     //   { title: "Properties", value: 0, icon: <HomeOutlined />, color: "#22c55e" },
     //   { title: "Units", value: 0, icon: <BankOutlined />, color: "#2563eb" },
@@ -39,19 +64,35 @@ export default function Dashboard() {
     setLeaseCount(data.length);
   };
 
-  useEffect(() => {
-    const jwtToken = accountState.accountDetails?.token;
-    const currentProfile = rentalProfileState.rentalProfile;
-
-    if (!jwtToken || !currentProfile) {
+  const loadInvitations = async (phoneNumber: string, token: string) =>
+  {
+    if(!phoneNumber)
+    {
+      notificationApi.error({
+        message: "Fail to load invites", 
+        description: `Phone number is ${phoneNumber}`
+      });
       navigate("/");
       return;
     }
 
+    const invites = await getActiveInvitations(phoneNumber,token ?? "",notificationApi);
+    setInvitesCount(invites.length)
+    setInvitations(invites);
+  }
+
+  useEffect(() => {
+    const jwtToken = accountState.accountDetails?.token;
+    const currentProfile = rentalProfileState.rentalProfile;
+
+    if (!jwtToken || !currentProfile || currentProfile==null) {
+      return;
+    }
 
     setRentalProfile(currentProfile);
-    loadLeasesCount(currentProfile.id, jwtToken!);
-  }, [rentalProfileState.rentalProfile, accountState.accountDetails?.token, navigate, notificationApi]);
+    loadLeasesCount(currentProfile.id, jwtToken);
+    loadInvitations(currentProfile.phoneNumber, jwtToken);
+  }, [accountState.accountDetails?.token, rentalProfileState.rentalProfile]);
 
   return (
     <div>
@@ -72,38 +113,36 @@ export default function Dashboard() {
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         {summaryCards.map((card) => (
           <Col xs={24} sm={12} md={6} key={card.title}>
-            <Card hoverable style={{ borderRadius: 16, border: "1px solid #eaf0f6", boxShadow: "none" }} bodyStyle={{ padding: 18 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 12,
-                    background: `${card.color}1A`,
-                    color: card.color,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 18,
-                  }}
+            <Card 
+                onClick={card.onClick}
+                hoverable 
+                style={{ borderRadius: 16, border: "1px solid #eaf0f6", boxShadow: "none", backgroundColor:card.color }} 
+            >
+                <Flex
+                    justify="space-between"
                 >
-                  {card.icon}
-                </div>
 
-                <div style={{ flex: 1 }}>
-                  <Text type="secondary" style={{ display: "block", fontSize: 13 }}>{card.title}</Text>
-                  <Title level={3} style={{ margin: "6px 0 0" }}>{card.value}</Title>
-                </div>
-              </div>
-
-              <div style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <Text style={{ color: "#2563eb", fontWeight: 600 }}>View {card.title.toLowerCase()}</Text>
-                <ArrowRightOutlined style={{ color: "#2563eb" }} />
-              </div>
+                    <Meta 
+                        avatar={<Avatar size={50} icon={card.icon}/>}
+                        title={card.title}
+                        description={card.value}
+                    />
+                    <RightOutlined />
+                </Flex>
+                
             </Card>
           </Col>
         ))}
       </Row>
+
+      <Modal
+          title="Invitations"
+          open={isInviteModalOpen}
+          onCancel={() => setIsInviteModalOpen(false)}
+          footer={null}
+      >
+          <Invitations phoneNumber={rentalProfile?.phoneNumber ?? ""} jwtToken={accountState.accountDetails?.token} />
+      </Modal>
 
       <Row gutter={[16, 16]}>
         <Col span={24}>

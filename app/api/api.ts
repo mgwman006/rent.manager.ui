@@ -148,7 +148,9 @@ export const leaseApi = {
   }
 };
 
-export const tenantInvitationApi = {
+
+export const leaseInvitationApi = {
+
   create: async (requestBody:TenantInvitationCreateDTO, token:string) => {
     const res = await apiClient.post<ApiResponse<TenantInvitationDetailsDTO>>(
       `/tenant-invitations`,
@@ -161,10 +163,54 @@ export const tenantInvitationApi = {
     );
 
     return handleResponse(res.data);
+  },
+    getActiveInvitationsByPhoneNumber: async (phoneNumber :string, jwtToken: string) => {
+        const results = await apiClient.get<ApiResponse<TenantInvitationDetailsDTO[]>>(`/lease-invitations/phone/${phoneNumber}`,
+            {
+                headers: {
+                'Authorization': `Bearer ${jwtToken}`
+                }
+            }
+        );
+        return handleResponse(results.data);
+    },
+
+  getByInvitationToken: async (invitationToken:string,jwtToken: string) => {
+    const res = await apiClient.get<ApiResponse<TenantInvitationDetailsDTO>>(`/lease-invitations/${invitationToken}`,
+        {
+            headers: {
+            'Authorization': `Bearer ${jwtToken}`
+            }
+        }
+    );
+    return handleResponse(res.data);
+  },
+
+  acceptInvitation: async (invitationToken:string, id:number, jwtToken: string) => {
+    const res = await apiClient.post<ApiResponse<TenantInvitationDetailsDTO>>(
+      `/lease-invitations/${invitationToken}/landlord/accept?landlordId=${id}`,
+      null,
+      {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      }
+    );
+    return handleResponse(res.data);
+  },
+
+  getLeaseDetailsByInvitationToken: async (invitationToken:string, jwtToken:string) => {
+    const res = await apiClient.get<ApiResponse<LeaseDetailsDTO>>(`/lease-invitations/${invitationToken}/lease`,
+        {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`
+            }
+        }
+    );
+
+    return handleResponse(res.data);
   }
-}
-
-
+};
 
 export function handleResponse<T>(response: ApiResponse<T>): T {
   if (!response.success) {
