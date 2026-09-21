@@ -1,8 +1,8 @@
-import { Card, Col, Drawer, Flex, Row, Button, Tag, Descriptions, Space, Listy, notification, Spin, Result, Badge, Alert, Modal, Form, InputNumber, Input, Avatar } from "antd";
+import { Card, Col, Drawer, Flex, Row, Button, Tag, Descriptions, Space, Listy, notification, Spin, Result, Badge, Alert, Modal, Form, InputNumber, Input, Avatar, Radio } from "antd";
 import { UserOutlined, CalendarOutlined, DollarOutlined, FieldTimeOutlined, EditFilled, PlusCircleOutlined, PlusOutlined, AlignLeftOutlined, ArrowLeftOutlined, EditOutlined } from "@ant-design/icons";
 import { Typography } from "antd";
 import { useEffect, useState } from "react";
-import { LeaseDetailsDTO, LeaseStatus, RentSummaryDTO } from "../../models/lease";
+import { LeaseDetailsDTO, LeaseStatus, LeaseUpdateDTO, RentFrequency, RentSummaryDTO } from "../../models/lease";
 import { TenantInvitationCreateDTO, TenantInvitationDetailsDTO } from "../../models/user";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useAccount } from "../../store/account/AccountContext";
@@ -25,6 +25,8 @@ export default function LeaseDetails()
     const [sendInviteDrawerOpen, setSendInviteDrawerOpen] = useState(false);
     const [tenantInvitationForm] = Form.useForm<TenantInvitationCreateDTO>();
     const [rentSummary,setRentSummary] = useState<RentSummaryDTO|null>();
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editLeaseForm] = Form.useForm<LeaseUpdateDTO>();
     const navigate = useNavigate();
 
     const token = accountState.accountDetails?.token ?? "";
@@ -84,6 +86,55 @@ export default function LeaseDetails()
         const resp = await getRentSummary(leaseId, token, notificationApi);
         setRentSummary(resp);
     }
+
+    const openEditModal = () => {
+        if (!leaseDetails) {
+            return;
+        }
+
+        editLeaseForm.setFieldsValue({
+            startDate: leaseDetails.startDate.slice(0, 10),
+            endDate: leaseDetails.endDate.slice(0, 10),
+            rentAmount: leaseDetails.rent?.amount,
+            currency: leaseDetails.rent?.currency,
+            rentFrequency: leaseDetails.rent?.frequency as RentFrequency,
+            fullLeasePaymentRequired: leaseDetails.fullLeasePaymentRequired,
+        });
+        setEditModalOpen(true);
+    };
+
+    const handleEditLease = async (values: LeaseUpdateDTO) => {
+        alert(JSON.stringify(values));
+        if (!token) {
+            notificationApi.error({
+                message: "Authentication Required",
+                description: "Please sign in again to edit this lease.",
+            });
+            return;
+        }
+
+        try {
+            const updatedLease = await leaseApi.updateLease(
+                leaseId,
+                {
+                    ...values,
+                    currency: leaseDetails?.rent?.currency ?? "TZS",
+                },
+                token
+            );
+            setLeaseDetails(updatedLease);
+            setEditModalOpen(false);
+            notificationApi.success({
+                message: "Lease Updated",
+                description: "The lease has been updated successfully.",
+            });
+        } catch (error: any) {
+            notificationApi.error({
+                message: "Failed to update lease",
+                description: error?.message ?? "Unable to update lease details.",
+            });
+        }
+    };
     
     useEffect(
         () =>
@@ -113,14 +164,7 @@ export default function LeaseDetails()
 
                     <Row>
                         <Col span={24}>
-                            <Flex
-                                justify="space-between"
-                            >
-
                             <Typography.Title level={3}>Lease Details</Typography.Title>
-                            <Button disabled={leaseDetails.status==LeaseStatus.ACTIVE} ><EditOutlined /> Edit Lease</Button>
-
-                            </Flex>
                         </Col>
                     </Row>
 
@@ -181,6 +225,7 @@ export default function LeaseDetails()
                             variant="borderless"
                             title="Lease Terms" 
                             style={{ marginBottom: 16 }}
+                            extra={[<Button disabled={leaseDetails.status==LeaseStatus.ACTIVE} onClick={openEditModal}><EditOutlined /> Edit Terms</Button>]}
                         >
                         <Flex vertical gap={8}>
 
@@ -310,6 +355,62 @@ export default function LeaseDetails()
                         ) : (
                             <Text type="secondary">No invites have been sent for this lease yet.</Text>
                         )}
+                    </Modal>
+
+                    <Modal
+                        title="Edit Lease"
+                        open={editModalOpen}
+                        onCancel={() => setEditModalOpen(false)}
+                        footer={null}
+                    >
+                        <Form
+                            form={editLeaseForm}
+                            layout="vertical"
+                            onFinish={handleEditLease}
+                            onFinishFailed={({ errorFields }) => {
+                                notificationApi.error({
+                                    message: "Unable to submit lease changes",
+                                    description: errorFields.map(({ name }) => name.join(".")).join(", "),
+                                });
+                            }}
+                        >
+                            <Form.Item name="startDate" label="Start Date" rules={[{ required: true }]}>
+                                <Input type="date" />
+                            </Form.Item>
+                            <Form.Item name="endDate" label="End Date" rules={[{ required: true }]}>
+                                <Input type="date" />
+                            </Form.Item>
+                            <Form.Item name="rentAmount" label="Rent Amount" rules={[{ required: true }]}>
+                                <InputNumber min={0} style={{ width: "100%" }}  suffix="TZS"/>
+                            </Form.Item>
+                            <Form.Item 
+                                name="rentFrequency" 
+                                rules={[{ required: true }]}
+                            >
+                                {/* <Input /> */}
+                                <Radio.Group buttonStyle="solid">
+                                    <Radio.Button value="YEARLY">Per Year</Radio.Button>
+                                    <Radio.Button value="MONTHLY">Per Month</Radio.Button>
+                                    <Radio.Button value="WEEKLY">Per Week</Radio.Button>
+                                    <Radio.Button value="DAILY">Per Day</Radio.Button>
+                                </Radio.Group>
+                        
+                            </Form.Item>
+                            <Form.Item
+                                name="fullLeasePaymentRequired"
+                                label="Do you need full payment"
+                                rules={[{ required: true, message: "Please select whether full payment is required" }]}
+                            >
+                                <Radio.Group buttonStyle="solid">
+                                    <Radio.Button value={true}>Yes</Radio.Button>
+                                    <Radio.Button value={false}>No</Radio.Button>
+                                </Radio.Group>
+                            </Form.Item>
+
+                            <Form.Item>
+                                <Button htmlType="submit"  type="primary" variant="solid" color="green" block>Submit</Button>
+                            </Form.Item>
+                        </Form>
                     </Modal>
 
                     <Drawer

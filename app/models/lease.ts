@@ -71,6 +71,15 @@ export interface LeaseCreateDTO {
   fullLeasePaymentRequired: boolean;
 }
 
+export interface LeaseUpdateDTO {
+  startDate?: string;
+  endDate?: string;
+  rentAmount: number;
+  currency: string;
+  rentFrequency?: RentFrequency;
+  fullLeasePaymentRequired: boolean;
+}
+
 export interface RentSummaryDTO{
   totalExpectedAmount: number;
   totalPaidAmount: number;
