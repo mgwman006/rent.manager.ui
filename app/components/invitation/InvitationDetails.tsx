@@ -207,11 +207,8 @@ function isTokenExpired(token?: string): boolean
         <Descriptions column={1} bordered style={{ marginTop: 20 }}>
           <Descriptions.Item label="Start Date">{lease?.startDate}</Descriptions.Item>
           <Descriptions.Item label="End Date">{lease?.endDate}</Descriptions.Item>
-          <Descriptions.Item label="Rental Amount">{lease?.rentAmount} {lease?.currency}</Descriptions.Item>
-          <Descriptions.Item label="Rental Period">{lease?.rentFrequency}</Descriptions.Item>
-          <Descriptions.Item label="Total Amount">{lease?.totalAmount}</Descriptions.Item>
-          <Descriptions.Item label="Amount Paid">{lease?.amountPaid}</Descriptions.Item>
-          <Descriptions.Item label="Ballance">{lease?.balance}</Descriptions.Item>
+          <Descriptions.Item label="Rental Amount">{lease?.rent?.amount} {lease?.rent.currency}</Descriptions.Item>
+          <Descriptions.Item label="Rental Period">{lease?.rent.frequency}</Descriptions.Item>
           <Descriptions.Item label="Status">
             <Tag color={invitation.status === "PENDING" ? "gold" : "green"}>{invitation.status}</Tag>
           </Descriptions.Item>

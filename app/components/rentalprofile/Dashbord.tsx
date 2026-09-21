@@ -13,11 +13,11 @@ import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext
 import { RentalProfileDetailsDTO } from "../../models/rentalprofile";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { getLeases } from "../../services/leaseService";
 import { useAccount } from "../../store/account/AccountContext";
 import Invitations from "../invitation/Invitations";
 import { getActiveInvitations } from "../../services/invitationService";
 import { TenantInvitationDetailsDTO } from "../../models/user";
+import { getLeasesAllLeases } from "../../services/leaseService";
 
 const { Meta } = Card;
 const { Title, Text } = Typography;
@@ -42,7 +42,7 @@ export default function Dashboard() {
       value: leaseCount, 
       icon: <BookOutlined />, 
       color: "#F7FFF2" ,
-      onClick: () => {},
+      onClick: () => navigate("leases"),
     },
     {
       title: "Invitations",
@@ -60,7 +60,7 @@ export default function Dashboard() {
     ];
 
   const loadLeasesCount = async (rentalProfileId: number, jwtToken: string) => {
-    const data = await getLeases(rentalProfileId, jwtToken, notificationApi);
+    const data = await getLeasesAllLeases(rentalProfileId, jwtToken, notificationApi);
     setLeaseCount(data.length);
   };
 

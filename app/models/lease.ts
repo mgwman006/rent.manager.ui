@@ -22,7 +22,10 @@ export enum LeaseStatus {
   ACTIVE = "ACTIVE",
   ENDED = "ENDED",
   TERMINATED = "TERMINATED",
-  PENDING = "PENDING"
+  PENDING = "PENDING",
+  EXPIRED = "EXPIRED",
+  PENDING_LANDLORD_APPROVAL = "PENDING_LANDLORD_APPROVAL",
+  PENDING_TENANT_APPROVAL = "PENDING_TENANT_APPROVAL"
 }
 
 
@@ -39,16 +42,18 @@ export interface LeaseDetailsDTO {
   id: number;
   startDate: string; // ISO date
   endDate: string; // ISO date
-  rentAmount: number;
-  currency: string;
-  rentFrequency:RentFrequency;
+  rent: RentDTO,
   fullLeasePaymentRequired:boolean;
-  totalAmount:number;
-  amountPaid:number;
-  balance:number;
   status: LeaseStatus;
   tenant?: TenantDetailsDTO;
   tenantInvitations?: TenantInvitationDetailsDTO[];
+}
+
+export interface RentDTO{
+    id :number,
+    amount : number,
+    currency : string,
+    frequency: string
 }
 
 export interface LeaseCreateDTO {
@@ -64,5 +69,37 @@ export interface LeaseCreateDTO {
   currency: string;
   rentFrequency?: RentFrequency;
   fullLeasePaymentRequired: boolean;
+}
+
+export interface RentSummaryDTO{
+  totalExpectedAmount: number;
+  totalPaidAmount: number;
+  totalOutstandingAmount: number;
+  status: RentPaymentStatus,
+  paymentBlocks: PaymentBlockSummaryDTO[],
+}
+
+export interface PaymentBlockSummaryDTO{
+  id:number;
+  amount: number;
+  paidAmount: number;
+  outstandingAmount: number;
+  startDate:string;
+  endDate:string;
+  dueDate: string;
+  status: PaymentBlockStatus
+}
+
+export enum RentPaymentStatus
+{
+  PAID = "PAID",
+  PARTIALLY_PAID = "PARTIALLY_PAID",
+  UNPAID = "UNPAID",
+}
+
+export enum PaymentBlockStatus
+{
+  PAID = "PAID",
+  UNPAID = "UNPAID",
 }
 

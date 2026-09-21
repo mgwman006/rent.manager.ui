@@ -33,7 +33,7 @@ const routes = [
                 Component:LeaseList
               },
               {
-                path:"leases/:leaseIdParam",
+                path:":leaseIdParam",
                 Component:LeaseDetails
               }
             ]

@@ -1,4 +1,4 @@
-import { Button, Card, Col, Drawer, Form, Input, InputNumber, notification, Radio, Row, Select, Spin, Tag, Typography } from "antd";
+import { Button, Card, Col, Drawer, Form, Input, InputNumber, notification, Radio, Row, Select, Spin, Tabs, TabsProps, Tag, Typography } from "antd";
 import { PlusOutlined, MoreOutlined, RightOutlined } from "@ant-design/icons";
 import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus } from "../../models/lease";
 import { useEffect, useState } from "react";
@@ -6,39 +6,63 @@ import { leaseApi } from "../../api/api";
 import { useAccount } from "../../store/account/AccountContext";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
-const { Meta } = Card;
-const { Title, Text } = Typography;
+import LeasesByStatus from "./LeasesByStatus";
+
+
 
 
 
 export default function LeaseList(){
-    const navigate = useNavigate();
     const [leaseForm] = Form.useForm<LeaseCreateDTO>();
-    const [leases, setLeases] = useState<LeaseDetailsDTO[]>([]);
     const [leasesLoading, setLeasesLoading] = useState(false);
     const [createLeaseModalVisible, setCreateLeaseModalVisible] = useState(false);
-    const [displayCount, setDisplayCount] = useState<number>(5);
     const [notificationApi, contextHolder] = notification.useNotification();
     const { accountState } = useAccount();
     const { rentalProfileState } = useRentalProfile();
     const token = accountState.accountDetails?.token ?? "";
 
 
-    const loadMore = () => setDisplayCount((c) => c + 5);
-
-
-    const loadLeases = async (rentalProfileId:number) => {
-    
-        setLeasesLoading(true);
-        try {
-          const data = await leaseApi.getLeasesByRentalProfile(rentalProfileId, token);
-          setLeases(data);
-        } catch (error: any) {
-          notificationApi.error({ message: "Failed to load leases", description: error?.message ?? "" });
-        } finally {
-          setLeasesLoading(false);
+    const leaseTabItems: TabsProps['items'] = [
+        {
+            key: '1',
+            label: 'Active',
+            children: LeasesByStatus(
+                rentalProfileState?.rentalProfile?.id ?? 0,
+                LeaseStatus.ACTIVE,
+                token,
+            ),
+        },
+        {
+            key: '2',
+            label: 'Pending Tenant',
+            children: LeasesByStatus(
+                rentalProfileState?.rentalProfile?.id ?? 0,
+                LeaseStatus.PENDING_TENANT_APPROVAL,
+                token,
+            ),
+        },
+        {
+            key: '3',
+            label: 'Pending Landlord',
+            children: LeasesByStatus(
+                rentalProfileState?.rentalProfile?.id ?? 0,
+                LeaseStatus.PENDING_LANDLORD_APPROVAL,
+                token,
+            ),
+        },
+        {
+            disabled:true,
+            key: '4',
+            label: 'Expired',
+            children: LeasesByStatus(
+                rentalProfileState?.rentalProfile?.id ?? 0,
+                LeaseStatus.EXPIRED,
+                token,
+            ),
         }
-      };
+    ];
+
+    
 
     const handleCreateLease = async (values: LeaseCreateDTO) => 
     {
@@ -62,7 +86,6 @@ export default function LeaseList(){
 
         
             setCreateLeaseModalVisible(false);
-            loadLeases(rentalProfileId); // Refresh the leases list
             notificationApi.success({
                 message: "Lease Created",
                 description: "The lease has been successfully created.",
@@ -75,66 +98,18 @@ export default function LeaseList(){
         }
     };
 
-   useEffect(() => {
-        const rentalProfileId = rentalProfileState.rentalProfile?.id;
-        if (!token || !rentalProfileId) {
-            return;
-        }
-        loadLeases(rentalProfileId);
-    }, [token, rentalProfileState.rentalProfile, notificationApi]);
+   
 
     return (
         <div>
             {contextHolder}
-            <Card style={{ marginTop: 24 }}>
-                <Row justify="space-between" align="middle">
-                    <Col>
-                        <Title level={5}>Leases</Title>
-                    </Col>
-                    <Col>
-                        <Button type="primary" onClick={() => setCreateLeaseModalVisible(true)}><PlusOutlined /> Create Lease</Button>
-                    </Col>
-                </Row>
+            <Card 
+                title="Leases"
+                extra={<Button type="primary" onClick={() => setCreateLeaseModalVisible(true)}><PlusOutlined /> Create Lease</Button>}
+            >
 
-                <div style={{ marginTop: 16 }}>
-                    {leasesLoading ? (
-                    <div style={{ textAlign: 'center', padding: 24 }}>
-                        <Spin />
-                    </div>
-                    ) : (
-                    <Row gutter={[16, 16]}>
-                        {leases.slice(0, displayCount).map((lease) => (
-                        <Col xs={24} sm={12} md={8} lg={8} xl={8} key={lease.id}>
-                            <Card
-                            title={
-                                <Tag 
-                                    color={lease.status.toString() === LeaseStatus.ACTIVE.toString() ? "green" : 
-                                        lease.status.toString() === LeaseStatus.PENDING.toString() ? "warning" : 
-                                        lease.status.toString() === LeaseStatus.ENDED.toString() ? "error" : 
-                                        lease.status.toString() === LeaseStatus.TERMINATED.toString() ? "error" :
-                                        "default"}>
-                                    {lease.status}
-                                </Tag>
-                                }
-                            style={{ height: '100%' }}
-                            extra={<MoreOutlined onClick={() => {navigate(`leases/${lease.id}`);}} />}
-                            >
-                            <Meta
-                                title={<Text strong>{lease.tenant?.firstName && lease.tenant?.lastName ? `${lease.tenant.firstName} ${lease.tenant.lastName}` : "No Tenant Assigned"}</Text>}
-                                description={<Text type="secondary">{lease.startDate} → {lease.endDate}</Text>}
-                            />
-                            </Card>
-                        </Col>
-                        ))}
-                    </Row>
-                    )}
-
-                    {displayCount < leases.length && (
-                    <div style={{ textAlign: 'center', marginTop: 12 }}>
-                        <Button onClick={loadMore}>Load more</Button>
-                    </div>
-                    )}
-                </div>
+                <Tabs defaultActiveKey="1" items={leaseTabItems} />
+                
             </Card>
 
 

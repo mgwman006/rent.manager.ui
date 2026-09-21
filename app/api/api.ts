@@ -3,7 +3,7 @@ import { ApiResponse } from '../models/common';
 import { ApiError } from '../models/error';
 import { MembershipDetailsDTO, TenantInvitationCreateDTO, TenantInvitationDetailsDTO } from '../models/user';
 import { CreateRentalProfileDTO, RentalProfileDetailsDTO } from '../models/rentalprofile';
-import { LeaseCreateDTO, LeaseDetailsDTO } from '../models/lease';
+import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, RentSummaryDTO } from '../models/lease';
 
 const apiUrl = import.meta.env.VITE_RENT_MANAGER_API_URL;
 
@@ -120,6 +120,19 @@ export const leaseApi = {
     return handleResponse(res.data);
   },
 
+  getLeasesByRentalProfileAndStatus: async (rentalProfileId: number,status:LeaseStatus, token: string) => {
+    const res = await apiClient.get<ApiResponse<LeaseDetailsDTO[]>>(
+      `/leases/rental-profile/${rentalProfileId}?status=${status}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
   getLeaseById: async (id : number, token: string) => {
     const res = await apiClient.get<ApiResponse<LeaseDetailsDTO>>(
       `/leases/${id}`,
@@ -145,7 +158,20 @@ export const leaseApi = {
     );
 
     return handleResponse(res.data);
-  }
+  },
+
+  getRentCollectionSummary: async (leaseId: number, token: string) => {
+    const res = await apiClient.get<ApiResponse<RentSummaryDTO>>(
+      `/leases/rent/summary/${leaseId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
 };
 
 

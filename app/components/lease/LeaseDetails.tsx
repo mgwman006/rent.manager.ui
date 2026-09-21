@@ -1,13 +1,14 @@
 import { Card, Col, Drawer, Flex, Row, Button, Tag, Descriptions, Space, Listy, notification, Spin, Result, Badge, Alert, Modal, Form, InputNumber, Input, Avatar } from "antd";
-import { UserOutlined, CalendarOutlined, DollarOutlined, FieldTimeOutlined, EditFilled, PlusCircleOutlined, PlusOutlined } from "@ant-design/icons";
+import { UserOutlined, CalendarOutlined, DollarOutlined, FieldTimeOutlined, EditFilled, PlusCircleOutlined, PlusOutlined, AlignLeftOutlined, ArrowLeftOutlined, EditOutlined } from "@ant-design/icons";
 import { Typography } from "antd";
 import { useEffect, useState } from "react";
-import { LeaseDetailsDTO } from "../../models/lease";
+import { LeaseDetailsDTO, LeaseStatus, RentSummaryDTO } from "../../models/lease";
 import { TenantInvitationCreateDTO, TenantInvitationDetailsDTO } from "../../models/user";
-import { useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useAccount } from "../../store/account/AccountContext";
 import { leaseApi, leaseInvitationApi } from "../../api/api";
 import { sentInvite } from "../../services/invitationService";
+import { getRentSummary } from "../../services/leaseService";
 const { Text } = Typography;
 const { Meta } = Card;
 
@@ -23,6 +24,8 @@ export default function LeaseDetails()
     const [inviteModalOpen, setInviteModalOpen] = useState(false);
     const [sendInviteDrawerOpen, setSendInviteDrawerOpen] = useState(false);
     const [tenantInvitationForm] = Form.useForm<TenantInvitationCreateDTO>();
+    const [rentSummary,setRentSummary] = useState<RentSummaryDTO|null>();
+    const navigate = useNavigate();
 
     const token = accountState.accountDetails?.token ?? "";
 
@@ -76,11 +79,17 @@ export default function LeaseDetails()
             setLeaseLoading(false);
         }
       };
+
+    const loadRentSummary = async () => {
+        const resp = await getRentSummary(leaseId, token, notificationApi);
+        setRentSummary(resp);
+    }
     
     useEffect(
         () =>
         {
             loadLeaseDetails();
+            loadRentSummary();
         },[leaseId]
     )
 
@@ -96,178 +105,186 @@ export default function LeaseDetails()
             {contextHolder}
             {leaseDetails && (
                 <>
-                <Row gutter={[16, 16]}>
+                    <Row>
+                        <Col span={24}>
+                            <Button color="green" variant="text" onClick={() => navigate(-1)}><ArrowLeftOutlined /> Back</Button>
+                        </Col>
+                    </Row>
+
+                    <Row>
+                        <Col span={24}>
+                            <Flex
+                                justify="space-between"
+                            >
+
+                            <Typography.Title level={3}>Lease Details</Typography.Title>
+                            <Button disabled={leaseDetails.status==LeaseStatus.ACTIVE} ><EditOutlined /> Edit Lease</Button>
+
+                            </Flex>
+                        </Col>
+                    </Row>
+
+                    <Row gutter={[16, 16]}>
+                        <Col span={24}>
+                            <Card 
+                                variant="borderless"
+                                title="Tenant" 
+                                style={{ marginBottom: 16 }}>
+
+                                    {
+                                        leaseDetails.tenant != null ? (
+                                            <Meta
+                                                avatar={<Avatar size={52}><UserOutlined style={{ fontSize: '25px' }} /></Avatar>}
+                                                title={leaseDetails.tenant?.firstName && leaseDetails.tenant?.lastName ? `${leaseDetails.tenant.firstName} ${leaseDetails.tenant.lastName}` : "No Tenant Assigned"}
+                                                description={`${leaseDetails.tenant?.phoneNumber ?? "No Phone Provided"}`}
+                                            />
+
+                                        ):(
+                                            <Alert
+                                                title="No tenant accepted this lease"
+                                                description={
+                                                    <Flex vertical gap="small">
+                                                        <Text>Please follow up with your tenant or send a new invite.</Text>
+                                                        <Flex wrap="wrap" gap="small">
+                                                            <Badge count={leaseDetails.tenantInvitations?.length ?? 0}>
+                                                                <Button onClick={() => setInviteModalOpen(true)} variant="filled">
+                                                                    Invitations
+                                                                </Button>
+                                                            </Badge>
+                                                            <Button type="primary" onClick={() => setSendInviteDrawerOpen(true)}>
+                                                                Send new Invite <PlusOutlined />
+                                                            </Button>
+                                                        </Flex>
+                                                    </Flex>
+                                                }
+                                                type="warning"
+                                            />
+                                            
+                                        )
+                                    }
+                                
+                            </Card>
+                        </Col>
+
+                    {/* <Col span={24}>
+                        <Card size="small" title="Property" style={{ marginBottom: 16 }}>
+                        <Descriptions column={1} size="small">
+                            <Descriptions.Item label="Unit ID">{selectedLease.unitId ?? "Not assigned"}</Descriptions.Item>
+                            <Descriptions.Item label="Property">{selectedLease.unitId ? `Unit ${selectedLease.unitId}` : "No property linked"}</Descriptions.Item>
+                            <Descriptions.Item label="Rental Profile ID">{selectedLease.rentalProfileId ?? rentalProfileId}</Descriptions.Item>
+                        </Descriptions>
+                        </Card>
+                    </Col> */}
+
                     <Col span={24}>
                         <Card 
                             variant="borderless"
-                            title="Tenant" 
-                            style={{ marginBottom: 16 }}>
+                            title="Lease Terms" 
+                            style={{ marginBottom: 16 }}
+                        >
+                        <Flex vertical gap={8}>
 
-                                {
-                                    leaseDetails.tenant != null ? (
-                                        <Meta
-                                            avatar={<Avatar size={52}><UserOutlined style={{ fontSize: '25px' }} /></Avatar>}
-                                            title={leaseDetails.tenant?.firstName && leaseDetails.tenant?.lastName ? `${leaseDetails.tenant.firstName} ${leaseDetails.tenant.lastName}` : "No Tenant Assigned"}
-                                            description={`${leaseDetails.tenant?.phoneNumber ?? "No Phone Provided"}`}
+                            <Flex gap={"medium"}>
+                                <Meta 
+                                    avatar={
+                                        <CalendarOutlined
+                                        style={{ color: '#14b8a6' }} 
                                         />
-
-                                    ):(
-                                        <Alert
-                                            title="No tenant accepted this lease"
-                                            description="Please follow up with your tenant or send new invite"
-                                            type="warning"
-                                            action={
-                                                <Flex vertical gap="small" >
-                                                    <Badge count={leaseDetails.tenantInvitations?.length ?? 0} >
-                                                        <Button onClick={()=>setInviteModalOpen(true)}  variant="filled">Invitations</Button>
-                                                    </Badge>
-                                                    <Button type="primary" onClick={() => setSendInviteDrawerOpen(true)}>
-                                                        Send new Invite <PlusOutlined/>
-                                                    </Button>
-                                                </Flex>
-                                            }
-                                        />
-                                        
-                                    )
-                                }
+                                    }
+                                    title={<Text strong>Start Date:</Text>}
+                                />
                             
+                                <Text>{leaseDetails.startDate}</Text>
+                            </Flex>
+
+                            <Flex gap={"medium"}>
+                                <Meta 
+                                    avatar={
+                                        <CalendarOutlined
+                                        style={{ color: 'red' }} 
+                                        />
+                                    }
+                                    title={<Text strong>End Date:</Text>}
+                                />
+                                <Text>{leaseDetails.endDate}</Text>
+                            </Flex>
+
+                            <Flex gap={"medium"}>
+                                <Meta 
+                                    avatar={
+                                        <DollarOutlined
+                                        style={{ color: '#14b8a6' }} 
+                                        />
+                                    }
+                                    title={<Text strong>Rent Amount:</Text>}
+                                />
+                                <Text>{leaseDetails.rent?.amount ?? "Not specified"} {leaseDetails.rent?.currency}</Text>
+                            </Flex>
+
+                            <Flex gap={"medium"}>
+                                <Meta 
+                                    avatar={
+                                        <FieldTimeOutlined
+                                        style={{ color: '#14b8a6' }} 
+                                        />
+                                    }
+                                    title={<Text strong>Rent Period:</Text>}
+                                />
+                                <Text>{leaseDetails.rent?.frequency ?? "Not specified"}</Text>
+                            </Flex>
+
+                        </Flex>
                         </Card>
                     </Col>
 
-                {/* <Col span={24}>
-                    <Card size="small" title="Property" style={{ marginBottom: 16 }}>
-                    <Descriptions column={1} size="small">
-                        <Descriptions.Item label="Unit ID">{selectedLease.unitId ?? "Not assigned"}</Descriptions.Item>
-                        <Descriptions.Item label="Property">{selectedLease.unitId ? `Unit ${selectedLease.unitId}` : "No property linked"}</Descriptions.Item>
-                        <Descriptions.Item label="Rental Profile ID">{selectedLease.rentalProfileId ?? rentalProfileId}</Descriptions.Item>
-                    </Descriptions>
-                    </Card>
-                </Col> */}
-
-                <Col span={24}>
-                    <Card 
-                        variant="borderless"
-                        title="Lease Terms" 
-                        style={{ marginBottom: 16 }}
-                    >
-                    <Flex vertical gap={8}>
-
-                        <Flex justify="space-between">
-                        <Meta 
-                            avatar={
-                                <CalendarOutlined
-                                style={{ color: '#14b8a6' }} 
-                                />
+                    <Col span={24}>
+                        <Card 
+                            variant="borderless"
+                            title="Rent Collection Summary" 
+                            style={{ marginBottom: 16 }}
+                        >
+                            {
+                                rentSummary?.paymentBlocks.length==0 ? (
+                                    <Row>
+                                        <Col span={24}>
+                                            <Alert
+                                        title="Error Text"
+                                        showIcon
+                                        description="No payment blocks"
+                                        type="warning"
+                                    />
+                                        </Col>
+                                    </Row>
+                                
+                                ):(
+                                    <div>
+                                        <Descriptions
+                                            size="small"
+                                            column={1}
+                                            layout="horizontal"
+                                        >
+                                        
+                                            <Descriptions.Item label="Total Rent Amount (TZS)">
+                                            {rentSummary?.totalExpectedAmount}
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label="Amount Paid (TZS)">
+                                            {rentSummary?.totalPaidAmount}
+                                            </Descriptions.Item>
+                                            <Descriptions.Item label="Outstanding Amount (TZS)">
+                                            {rentSummary?.totalOutstandingAmount}
+                                            </Descriptions.Item>
+                                        
+                                        </Descriptions>
+                                    </div>
+                                )
                             }
-                            title={<Text strong>Start Date:</Text>}
-                        />
-                    
-                        <Text>{leaseDetails.startDate}</Text>
-                        </Flex>
+                        </Card>
+                    </Col>
 
-                        <Flex justify="space-between">
-                        <Meta 
-                            avatar={
-                                <CalendarOutlined
-                                style={{ color: 'red' }} 
-                                />
-                            }
-                            title={<Text strong>End Date:</Text>}
-                        />
-                        <Text>{leaseDetails.endDate}</Text>
-                        </Flex>
+                
+                    </Row>
 
-                        <Flex justify="space-between">
-                        <Meta 
-                            avatar={
-                                <DollarOutlined
-                                style={{ color: '#14b8a6' }} 
-                                />
-                            }
-                            title={<Text strong>Rent Amount:</Text>}
-                        />
-                        <Text>{leaseDetails.rentAmount} {leaseDetails.currency}</Text>
-                        </Flex>
-
-                        <Flex justify="space-between">
-                        <Meta 
-                            avatar={
-                                <FieldTimeOutlined
-                                style={{ color: '#14b8a6' }} 
-                                />
-                            }
-                            title={<Text strong>Rent Period:</Text>}
-                        />
-                        <Text>{leaseDetails.rentFrequency ?? "Not specified"}</Text>
-                        </Flex>
-
-                    </Flex>
-                    </Card>
-                </Col>
-
-                <Col span={24}>
-                    <Card 
-                        variant="borderless"
-                        title="Financials Summary" 
-                        style={{ marginBottom: 16 }}
-                    >
-                    <Flex vertical gap={8}>
-                        <Flex justify="space-between">
-                        <Meta 
-                            avatar={
-                                <FieldTimeOutlined
-                                style={{ color: '#14b8a6' }} 
-                                />
-                            }
-                            title={<Text strong>Payment Period:</Text>}
-                        />
-                        <Text>{leaseDetails.rentFrequency ?? "Not specified"}</Text>
-                        </Flex>
-
-                        <Flex justify="space-between">
-                        <Meta 
-                            avatar={
-                                <DollarOutlined
-                                style={{ color: '#14b8a6' }} 
-                                />
-                            }
-                            title={<Text strong>Amount To Pay:</Text>}
-                        />
-                        <Text>{leaseDetails.totalAmount} {leaseDetails.currency}</Text>
-                        </Flex>
-
-                        <Flex justify="space-between">
-                        <Meta 
-                            avatar={
-                                <DollarOutlined
-                                style={{ color: '#14b8a6' }} 
-                                />
-                            }
-                            title={<Text strong>Amount Paid:</Text>}
-                        />
-                        <Text>{leaseDetails.amountPaid ?? 0} {leaseDetails.currency}</Text>
-                        </Flex>
-
-                        <Flex justify="space-between">
-                        <Meta 
-                            avatar={
-                                <DollarOutlined
-                                style={{ color: 'red' }} 
-                                />
-                            }
-                            title={<Text strong>Balance:</Text>}
-                        />
-                        <Text>{leaseDetails.balance ?? leaseDetails.rentAmount} {leaseDetails.currency}</Text>
-                        </Flex>
-
-                    </Flex>
-                    </Card>
-                </Col>
-
-            
-                </Row>
-
-                     <Modal
+                    <Modal
                         title="Existing Invites"
                         open={inviteModalOpen}
                         onCancel={() => setInviteModalOpen(false)}
@@ -301,7 +318,7 @@ export default function LeaseDetails()
                         open={sendInviteDrawerOpen}
                         onClose={() => setSendInviteDrawerOpen(false)}
                     >
-                       <Form
+                        <Form
                             layout="vertical"
                             form={tenantInvitationForm}
                             onFinish={sendTenantInvite}
@@ -309,7 +326,7 @@ export default function LeaseDetails()
                             initialValues={{
                                 leaseId : leaseDetails.id
                             }}
-                       >
+                        >
                             <Form.Item
                                 name="leaseId"
                                 label="leaseId"
@@ -352,7 +369,7 @@ export default function LeaseDetails()
                                 Submit
                             </Button>
 
-                       </Form>
+                        </Form>
                     </Drawer>
 
                 </>

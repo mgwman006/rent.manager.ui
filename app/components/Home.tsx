@@ -1,16 +1,15 @@
 import { Typography,Layout, Image, Grid, Drawer, Button, Card, Row, Divider, Col, Space, Tag, Flex, Menu, Avatar } from 'antd';
 import { MenuOutlined, UserAddOutlined, UserOutlined, UserSwitchOutlined } from '@ant-design/icons';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link as RouterLink } from 'react-router-dom';
 import { useState } from 'react';
 import Sider from 'antd/es/layout/Sider';
 
-const { Title, Text, Link } = Typography;
 
 const { Header, Footer, Content } = Layout;
 const { useBreakpoint } = Grid;
 
 const navItems = [
-  { key: 'dashborad', label: 'Dashborad', to: '#' },
+  { key: 'dashborad', label: <RouterLink to="/rental-profile">Dash borad</RouterLink>, to: '/rental-profile' },
   { key: 'leases', label: 'Leases', to: '#' },
   { key: 'properties', label: 'Properties', to: '#' },
   { key: 'tenants', label: 'Tenants', to: '#' },
