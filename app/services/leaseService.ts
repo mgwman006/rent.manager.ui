@@ -1,6 +1,6 @@
 import { NotificationInstance } from "antd/es/notification/interface";
 import { leaseApi } from "../api/api";
-import { LeaseDetailsDTO, LeaseStatus, RentSummaryDTO } from "../models/lease";
+import { LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, RentSummaryDTO } from "../models/lease";
 import { ApiError } from "../models/error";
 
 
@@ -57,3 +57,21 @@ export const getRentSummary = async (rentalProfileId:number, token: string, noti
     }
 }
 
+
+export const updateLeaseTerms = async (leaseId:number,leaseTerms:LeaseTermsUpdateDTO, token:string,notificationApi:NotificationInstance) : Promise<LeaseDetailsDTO | null> => {
+    try {
+        const updatedLease = await leaseApi.updateLease(leaseId,leaseTerms,token);
+            return updatedLease;
+        } catch (error: unknown) {
+            const apiError = error as ApiError;
+            notificationApi.error({
+                message: apiError.message ?? "Failed to update lease",
+                 description: apiError.details
+                ? typeof apiError.details === "string"
+                    ? apiError.details
+                    : JSON.stringify(apiError.details)
+                : "Unable to update lease terms.",
+            });
+            return null;
+        }
+}

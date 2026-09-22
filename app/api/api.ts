@@ -3,7 +3,7 @@ import { ApiResponse } from '../models/common';
 import { ApiError } from '../models/error';
 import { MembershipDetailsDTO, TenantInvitationCreateDTO, TenantInvitationDetailsDTO } from '../models/user';
 import { CreateRentalProfileDTO, RentalProfileDetailsDTO } from '../models/rentalprofile';
-import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseUpdateDTO, RentSummaryDTO } from '../models/lease';
+import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, RentSummaryDTO } from '../models/lease';
 
 const apiUrl = import.meta.env.VITE_RENT_MANAGER_API_URL;
 
@@ -160,9 +160,9 @@ export const leaseApi = {
     return handleResponse(res.data);
   },
 
-  updateLease: async (id: number, requestBody: LeaseUpdateDTO, token: string) => {
-    const res = await apiClient.put<ApiResponse<LeaseDetailsDTO>>(
-      `/leases/${id}`,
+  updateLease: async (id: number, requestBody: LeaseTermsUpdateDTO, token: string) => {
+    const res = await apiClient.patch<ApiResponse<LeaseDetailsDTO>>(
+      `/leases/${id}/terms`,
       requestBody,
       {
         headers: {

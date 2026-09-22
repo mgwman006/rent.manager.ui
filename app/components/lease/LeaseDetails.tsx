@@ -1,16 +1,52 @@
-import { Card, Col, Drawer, Flex, Row, Button, Tag, Descriptions, Space, Listy, notification, Spin, Result, Badge, Alert, Modal, Form, InputNumber, Input, Avatar, Radio } from "antd";
-import { UserOutlined, CalendarOutlined, DollarOutlined, FieldTimeOutlined, EditFilled, PlusCircleOutlined, PlusOutlined, AlignLeftOutlined, ArrowLeftOutlined, EditOutlined } from "@ant-design/icons";
+import { Card, Col, Drawer, Flex, Row, Button, Tag, Descriptions, Space, Listy, notification, Spin, Result, Badge, Alert, Modal, Form, InputNumber, Input, Avatar, Radio, TableProps, Table } from "antd";
+import { UserOutlined, CalendarOutlined, DollarOutlined, FieldTimeOutlined, EditFilled, PlusCircleOutlined, PlusOutlined, AlignLeftOutlined, ArrowLeftOutlined, EditOutlined, BookOutlined, BellOutlined, ArrowRightOutlined, WalletOutlined, CreditCardFilled, ScheduleOutlined } from "@ant-design/icons";
 import { Typography } from "antd";
 import { useEffect, useState } from "react";
-import { LeaseDetailsDTO, LeaseStatus, LeaseUpdateDTO, RentFrequency, RentSummaryDTO } from "../../models/lease";
+import { LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, PaymentBlockStatus, PaymentBlockSummaryDTO, RentFrequency, RentSummaryDTO } from "../../models/lease";
 import { TenantInvitationCreateDTO, TenantInvitationDetailsDTO } from "../../models/user";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useAccount } from "../../store/account/AccountContext";
 import { leaseApi, leaseInvitationApi } from "../../api/api";
 import { sentInvite } from "../../services/invitationService";
-import { getRentSummary } from "../../services/leaseService";
+import { getRentSummary, updateLeaseTerms } from "../../services/leaseService";
 const { Text } = Typography;
 const { Meta } = Card;
+
+
+
+const columns: TableProps<PaymentBlockSummaryDTO>['columns'] = [
+  {
+    title: 'Start Date',
+    dataIndex: 'startDate',
+    key: 'startDate',
+  },
+  {
+    title: 'End Date',
+    dataIndex: 'endDate',
+    key: 'endDate',
+  },
+  {
+    title: 'Amount',
+    dataIndex: 'amount',
+    key: 'amount',
+  },
+  {
+    title: 'Paid Amount',
+    dataIndex: 'paidAmount',
+    key: 'paidAmount',
+  },
+  {
+    title: 'Outstanding Amount',
+    dataIndex: 'outstandingAmount',
+    key: 'outstandingAmount',
+  },
+  {
+    title: 'Status',
+    dataIndex: 'status',
+    key: 'status',
+    render: (text) => <Tag color={text==PaymentBlockStatus.UNPAID ? "red":"green"} >{text}</Tag>,
+  }
+];
 
 
 export default function LeaseDetails()
@@ -26,7 +62,7 @@ export default function LeaseDetails()
     const [tenantInvitationForm] = Form.useForm<TenantInvitationCreateDTO>();
     const [rentSummary,setRentSummary] = useState<RentSummaryDTO|null>();
     const [editModalOpen, setEditModalOpen] = useState(false);
-    const [editLeaseForm] = Form.useForm<LeaseUpdateDTO>();
+    const [editLeaseForm] = Form.useForm<LeaseTermsUpdateDTO>();
     const navigate = useNavigate();
 
     const token = accountState.accountDetails?.token ?? "";
@@ -89,61 +125,89 @@ export default function LeaseDetails()
 
     const openEditModal = () => {
         if (!leaseDetails) {
+            notificationApi.error({
+                message: "Lease data is not available",
+                description: "The lease details are still loading or missing rent data.",
+            });
             return;
         }
 
         editLeaseForm.setFieldsValue({
-            startDate: leaseDetails.startDate.slice(0, 10),
-            endDate: leaseDetails.endDate.slice(0, 10),
-            rentAmount: leaseDetails.rent?.amount,
-            currency: leaseDetails.rent?.currency,
-            rentFrequency: leaseDetails.rent?.frequency as RentFrequency,
-            fullLeasePaymentRequired: leaseDetails.fullLeasePaymentRequired,
+            startDate: leaseDetails.startDate ? leaseDetails.startDate.slice(0, 10) : "",
+            endDate: leaseDetails.endDate ? leaseDetails.endDate.slice(0, 10) : "",
+            rent: {
+                id: leaseDetails.rent?.id ?? 0,
+                amount: leaseDetails.rent?.amount ?? 0,
+                currency: leaseDetails.rent?.currency ?? "TZS",
+                frequency: (leaseDetails.rent?.frequency as RentFrequency) ?? RentFrequency.MONTHLY,
+            },
+            fullLeasePaymentRequired: leaseDetails.fullLeasePaymentRequired ?? false,
         });
         setEditModalOpen(true);
     };
 
-    const handleEditLease = async (values: LeaseUpdateDTO) => {
-        alert(JSON.stringify(values));
+    const handleEditLease = async (values: LeaseTermsUpdateDTO) => {
         if (!token) {
             notificationApi.error({
                 message: "Authentication Required",
                 description: "Please sign in again to edit this lease.",
             });
+            navigate("/");
             return;
         }
 
-        try {
-            const updatedLease = await leaseApi.updateLease(
-                leaseId,
-                {
-                    ...values,
-                    currency: leaseDetails?.rent?.currency ?? "TZS",
-                },
-                token
-            );
+        const payload: LeaseTermsUpdateDTO = {
+        ...values,
+        rent: {
+            ...values.rent,
+            currency: leaseDetails?.rent?.currency ?? "TZS",
+        },
+        };
+
+        const updatedLease = await updateLeaseTerms(
+            leaseId,
+            payload,
+            token,
+            notificationApi
+        );
+
+        if (updatedLease) {
             setLeaseDetails(updatedLease);
             setEditModalOpen(false);
-            notificationApi.success({
-                message: "Lease Updated",
-                description: "The lease has been updated successfully.",
-            });
-        } catch (error: any) {
-            notificationApi.error({
-                message: "Failed to update lease",
-                description: error?.message ?? "Unable to update lease details.",
-            });
         }
+       
     };
+
+    const summaryCards = [
+    { 
+      title: "Total Lease Amount", 
+      value: `${rentSummary?.totalExpectedAmount}`, 
+      icon: <WalletOutlined />, 
+      color: "#F5F9FC" ,
+    },
+    { 
+      title: "Total Paid Amount", 
+      value: `${rentSummary?.totalPaidAmount}`, 
+      icon: <CreditCardFilled />, 
+      color: "#F7FFF2" ,
+    },
+    {
+      title: "Total Outstanding Amount",
+      value:`${rentSummary?.totalOutstandingAmount}`,
+      icon: <ScheduleOutlined />,    
+      color: "#FAE6E6",
+    }
+];
     
     useEffect(
         () =>
         {
             loadLeaseDetails();
             loadRentSummary();
-        },[leaseId]
+        },[]
     )
 
+    
     if(leaseLoading) {
     return (
       <div style={{ textAlign: "center", paddingTop: 50 }}>
@@ -151,6 +215,8 @@ export default function LeaseDetails()
       </div>
     );
   }
+
+  
     return (
         <div>
             {contextHolder}
@@ -158,7 +224,7 @@ export default function LeaseDetails()
                 <>
                     <Row>
                         <Col span={24}>
-                            <Button color="green" variant="text" onClick={() => navigate(-1)}><ArrowLeftOutlined /> Back</Button>
+                            <Button color="default" variant="text" onClick={() => navigate(-1)}><ArrowLeftOutlined /> Back</Button>
                         </Col>
                     </Row>
 
@@ -303,23 +369,42 @@ export default function LeaseDetails()
                                 
                                 ):(
                                     <div>
-                                        <Descriptions
-                                            size="small"
-                                            column={1}
-                                            layout="horizontal"
-                                        >
-                                        
-                                            <Descriptions.Item label="Total Rent Amount (TZS)">
-                                            {rentSummary?.totalExpectedAmount}
-                                            </Descriptions.Item>
-                                            <Descriptions.Item label="Amount Paid (TZS)">
-                                            {rentSummary?.totalPaidAmount}
-                                            </Descriptions.Item>
-                                            <Descriptions.Item label="Outstanding Amount (TZS)">
-                                            {rentSummary?.totalOutstandingAmount}
-                                            </Descriptions.Item>
-                                        
-                                        </Descriptions>
+                                        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                                            {summaryCards.map((card) => (
+                                            <Col xs={24} sm={12} md={6} key={card.title}>
+                                                <Card 
+                                                    hoverable 
+                                                    style={{ borderRadius: 16, border: "1px solid #eaf0f6", boxShadow: "none", backgroundColor:card.color }} 
+                                                >
+                                                    <Flex
+                                                        justify="space-between"
+                                                    >
+
+                                                        <Meta 
+                                                            avatar={<Avatar size={50} icon={card.icon}/>}
+                                                            title={card.title}
+                                                            description={card.value}
+                                                        />
+                                                    </Flex>
+                                                    
+                                                </Card>
+                                            </Col>
+                                            ))}
+                                        </Row>
+                                       
+                                        <Row>
+                                            <Col span={24}>
+                                                <div style={{ overflowX: "auto", width: "100%" }}>
+                                                    <Table<PaymentBlockSummaryDTO>
+                                                        columns={columns}
+                                                        dataSource={rentSummary?.paymentBlocks ?? []}
+                                                        pagination={false}
+                                                        scroll={{ x: 640 }}
+                                                        size="small"
+                                                    />
+                                                </div>
+                                            </Col>
+                                        </Row>
                                     </div>
                                 )
                             }
@@ -358,7 +443,7 @@ export default function LeaseDetails()
                     </Modal>
 
                     <Modal
-                        title="Edit Lease"
+                        title="Edit Terms"
                         open={editModalOpen}
                         onCancel={() => setEditModalOpen(false)}
                         footer={null}
@@ -380,11 +465,17 @@ export default function LeaseDetails()
                             <Form.Item name="endDate" label="End Date" rules={[{ required: true }]}>
                                 <Input type="date" />
                             </Form.Item>
-                            <Form.Item name="rentAmount" label="Rent Amount" rules={[{ required: true }]}>
-                                <InputNumber min={0} style={{ width: "100%" }}  suffix="TZS"/>
+                            <Form.Item name={["rent", "id"]} hidden>
+                                <InputNumber />
+                            </Form.Item>
+                            <Form.Item name={["rent", "currency"]} hidden>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item name={["rent", "amount"]} label="Rent Amount" rules={[{ required: true }]}> 
+                                <InputNumber min={0} style={{ width: "100%" }} suffix="TZS"/>
                             </Form.Item>
                             <Form.Item 
-                                name="rentFrequency" 
+                                name={["rent", "frequency"]} 
                                 rules={[{ required: true }]}
                             >
                                 {/* <Input /> */}
