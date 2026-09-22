@@ -234,7 +234,7 @@ export default function LeaseDetails()
                         </Col>
                     </Row>
 
-                    <Row gutter={[16, 16]}>
+                    <Row>
                         <Col span={24}>
                             <Card 
                                 variant="borderless"
@@ -275,18 +275,10 @@ export default function LeaseDetails()
                                 
                             </Card>
                         </Col>
+                    </Row>
 
-                    {/* <Col span={24}>
-                        <Card size="small" title="Property" style={{ marginBottom: 16 }}>
-                        <Descriptions column={1} size="small">
-                            <Descriptions.Item label="Unit ID">{selectedLease.unitId ?? "Not assigned"}</Descriptions.Item>
-                            <Descriptions.Item label="Property">{selectedLease.unitId ? `Unit ${selectedLease.unitId}` : "No property linked"}</Descriptions.Item>
-                            <Descriptions.Item label="Rental Profile ID">{selectedLease.rentalProfileId ?? rentalProfileId}</Descriptions.Item>
-                        </Descriptions>
-                        </Card>
-                    </Col> */}
-
-                    <Col span={24}>
+                    <Row>
+                        <Col span={24}>
                         <Card 
                             variant="borderless"
                             title="Lease Terms" 
@@ -347,71 +339,75 @@ export default function LeaseDetails()
                         </Flex>
                         </Card>
                     </Col>
+                    </Row>
 
-                    <Col span={24}>
-                        <Card 
-                            variant="borderless"
-                            title="Rent Collection Summary" 
-                            style={{ marginBottom: 16 }}
-                        >
-                            {
-                                rentSummary?.paymentBlocks.length==0 ? (
-                                    <Row>
-                                        <Col span={24}>
-                                            <Alert
-                                        title="Error Text"
-                                        showIcon
-                                        description="No payment blocks"
-                                        type="warning"
-                                    />
-                                        </Col>
-                                    </Row>
-                                
-                                ):(
-                                    <div>
-                                        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                                            {summaryCards.map((card) => (
-                                            <Col xs={24} sm={12} md={6} key={card.title}>
-                                                <Card 
-                                                    hoverable 
-                                                    style={{ borderRadius: 16, border: "1px solid #eaf0f6", boxShadow: "none", backgroundColor:card.color }} 
-                                                >
-                                                    <Flex
-                                                        justify="space-between"
-                                                    >
-
-                                                        <Meta 
-                                                            avatar={<Avatar size={50} icon={card.icon}/>}
-                                                            title={card.title}
-                                                            description={card.value}
-                                                        />
-                                                    </Flex>
-                                                    
-                                                </Card>
-                                            </Col>
-                                            ))}
-                                        </Row>
-                                       
+                    <Row>
+                        <Col span={24}>
+                            <Card 
+                                variant="borderless"
+                                title="Rent Collection Summary" 
+                                style={{ marginBottom: 16 }}
+                            >
+                                {
+                                    rentSummary?.paymentBlocks.length==0 ? (
                                         <Row>
                                             <Col span={24}>
-                                                <div style={{ overflowX: "auto", width: "100%" }}>
-                                                    <Table<PaymentBlockSummaryDTO>
-                                                        columns={columns}
-                                                        dataSource={rentSummary?.paymentBlocks ?? []}
-                                                        pagination={false}
-                                                        scroll={{ x: 640 }}
-                                                        size="small"
-                                                    />
-                                                </div>
+                                                <Alert
+                                            title="Error Text"
+                                            showIcon
+                                            description="No payment blocks"
+                                            type="warning"
+                                        />
                                             </Col>
                                         </Row>
-                                    </div>
-                                )
-                            }
-                        </Card>
-                    </Col>
+                                    
+                                    ):(
+                                        <div>
+                                            <Row gutter={[16, 16]} >
+                                                {summaryCards.map((card) => (
+                                                <Col xs={24} sm={12} md={6} key={card.title}>
+                                                    <Card 
+                                                        hoverable 
+                                                        style={{ backgroundColor:card.color ,marginBottom: 16}} 
+                                                    >
+                                                        
 
-                
+                                                            <Meta 
+                                                            avatar={<Avatar size={50} icon={card.icon} />} 
+                                                            title={
+                                                                <Text strong style={{ display: "block", whiteSpace: "normal", wordBreak: "break-word" }}>
+                                                                    {card.title}
+                                                                </Text>
+                                                            }
+                                                            description={
+                                                                <Text style={{ display: "block", whiteSpace: "normal", wordBreak: "break-word" }}>
+                                                                    {card.value}
+                                                                </Text>
+                                                            }
+                                                        />
+                                                    </Card>
+                                                </Col>
+                                                ))}
+                                            </Row>
+                                        
+                                            <Row>
+                                                <Col span={24}>
+                                                    <div style={{ overflowX: "auto", width: "100%" }}>
+                                                        <Table<PaymentBlockSummaryDTO>
+                                                            columns={columns}
+                                                            dataSource={rentSummary?.paymentBlocks ?? []}
+                                                            pagination={false}
+                                                            scroll={{ x: 640 }}
+                                                            size="small"
+                                                        />
+                                                    </div>
+                                                </Col>
+                                            </Row>
+                                        </div>
+                                    )
+                                }
+                            </Card>
+                        </Col>
                     </Row>
 
                     <Modal
