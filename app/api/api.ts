@@ -148,7 +148,7 @@ export const leaseApi = {
 
   createLease: async (requestBody: LeaseCreateDTO, token: string) => {
     const res = await apiClient.post<ApiResponse<LeaseDetailsDTO>>(
-      `/leases`,
+      `/leases/landlord`,
       requestBody,
       {
         headers: {

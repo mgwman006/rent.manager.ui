@@ -2,11 +2,11 @@ import { Button, Card, Col, Drawer, Form, Input, InputNumber, notification, Radi
 import { PlusOutlined, MoreOutlined, RightOutlined } from "@ant-design/icons";
 import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus } from "../../models/lease";
 import { useEffect, useState } from "react";
-import { leaseApi } from "../../api/api";
 import { useAccount } from "../../store/account/AccountContext";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
 import LeasesByStatus from "./LeasesByStatus";
+import { createLease } from "../../services/leaseService";
 
 
 
@@ -20,6 +20,7 @@ export default function LeaseList(){
     const { accountState } = useAccount();
     const { rentalProfileState } = useRentalProfile();
     const token = accountState.accountDetails?.token ?? "";
+    const navigate = useNavigate();
 
 
     const leaseTabItems: TabsProps['items'] = [
@@ -64,36 +65,30 @@ export default function LeaseList(){
 
     
 
-    const handleCreateLease = async (values: LeaseCreateDTO) => 
-    {
+    const handleCreateLease = async (values: LeaseCreateDTO) => {
         const rentalProfileId = rentalProfileState.rentalProfile?.id;
         if (!token || !rentalProfileId) {
             notificationApi.error({
                 message: "Authentication Required",
                 description: "Please sign in again to create a lease.",
             });
-            return;
+            navigate("/");
+            return null;
         }
 
-        try 
-        {
-            const newLease: LeaseCreateDTO = {
-                ...values,
-                rentalProfileId: rentalProfileId,
-            };
+        const response = await createLease(
+            values,
+            rentalProfileId,
+            token,
+            notificationApi,
+        );
 
-            const response = await leaseApi.createLease(newLease, token);
-
-        
+        if (response) {
             setCreateLeaseModalVisible(false);
+            leaseForm.resetFields();
             notificationApi.success({
                 message: "Lease Created",
                 description: "The lease has been successfully created.",
-            });
-        } catch (error: any) {
-            notificationApi.error({
-                message: error.message ?? "Failed to create lease",
-                description: error?.data ?? "Unable to create lease.",
             });
         }
     };
@@ -126,7 +121,7 @@ export default function LeaseList(){
                 <Form
                 form={leaseForm}
                 layout="vertical"
-                onFinish={async (values) => {handleCreateLease(values);}}
+                onFinish={handleCreateLease}
                 >
                 <Form.Item
                     hidden={true}
@@ -196,7 +191,15 @@ export default function LeaseList(){
                 </Form.Item>
 
                 <Form.Item
-                    name="rentAmount"
+                    name={["rent", "id"]}
+                    initialValue={null}
+                    hidden
+                >
+                    <InputNumber />
+                </Form.Item>
+
+                <Form.Item
+                    name={["rent", "amount"]}
                     label="Rent Amount"
                     rules={[{ required: true, message: "Please enter the rent amount" }]}
                 >
@@ -204,7 +207,7 @@ export default function LeaseList(){
                 </Form.Item>
 
                 <Form.Item
-                    name="currency"
+                    name={["rent", "currency"]}
                     label="Currency"
                     rules={[{ required: true, message: "Please enter the currency" }]}
                 >
@@ -219,7 +222,7 @@ export default function LeaseList(){
                 </Form.Item>
 
                 <Form.Item
-                    name="rentFrequency"
+                    name={["rent", "frequency"]}
                     label="Rent Frequency"
                     rules={[{ required: true, message: "Please select the rent period" }]}
                 >

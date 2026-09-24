@@ -100,7 +100,8 @@ export default function LeaseTermView({
                         <Descriptions.Item label="End Date">{leaseDetails.endDate}</Descriptions.Item>
                         <Descriptions.Item label="Rent Amount">{leaseDetails.rent?.amount ?? "Not specified"} {leaseDetails.rent?.currency}</Descriptions.Item>
                         <Descriptions.Item label="Rent Period">{leaseDetails.rent?.frequency ?? "Not specified"}</Descriptions.Item>
-                        <Descriptions.Item label="Is Full payment required">{leaseDetails.fullLeasePaymentRequired}</Descriptions.Item>
+                        <Descriptions.Item label="Is Full payment required">{leaseDetails.fullLeasePaymentRequired ? "Yes" : "No"}
+                        </Descriptions.Item>
                     </Descriptions>
                 </Card>
 

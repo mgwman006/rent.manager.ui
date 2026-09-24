@@ -1,6 +1,6 @@
 import { NotificationInstance } from "antd/es/notification/interface";
 import { leaseApi } from "../api/api";
-import { LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, RentSummaryDTO } from "../models/lease";
+import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, RentSummaryDTO } from "../models/lease";
 import { ApiError } from "../models/error";
 
 
@@ -52,6 +52,39 @@ export const getRentSummary = async (rentalProfileId:number, token: string, noti
                     ? apiError.details
                     : JSON.stringify(apiError.details)
                 : "The lease details could not be loaded.",
+        });
+        return null;
+    }
+}
+
+export const createLease = async (
+    lease: LeaseCreateDTO,
+    rentalProfileId: number,
+    token: string,
+    notificationApi: NotificationInstance,
+): Promise<LeaseDetailsDTO | null> => {
+    
+    try {
+        return await leaseApi.createLease(
+            {
+                ...lease,
+                rentalProfileId,
+                rent: {
+                    ...lease.rent,
+                    id: lease.rent.id ?? 0,
+                },
+            },
+            token,
+        );
+    } catch (error: unknown) {
+        const apiError = error as ApiError;
+        notificationApi.error({
+            message: apiError.message ?? "Failed to create lease",
+            description: apiError.details
+                ? typeof apiError.details === "string"
+                    ? apiError.details
+                    : JSON.stringify(apiError.details)
+                : "Unable to create lease.",
         });
         return null;
     }

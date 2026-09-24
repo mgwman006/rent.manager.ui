@@ -44,6 +44,7 @@ export default function LeaseDetails()
         setLeaseLoading(true);
         try {
           const data = await leaseApi.getLeaseById(leaseId, token);
+          console.log(JSON.stringify(data));
           setLeaseDetails(data);
         } catch (error: any) {
           notificationApi.error({

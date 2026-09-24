@@ -65,9 +65,7 @@ export interface LeaseCreateDTO {
   tenantPhoneNumber?: string;
   startDate?: string;
   endDate?: string;
-  rentAmount: number;
-  currency: string;
-  rentFrequency?: RentFrequency;
+  rent: RentDTO;
   fullLeasePaymentRequired: boolean;
 }
 
