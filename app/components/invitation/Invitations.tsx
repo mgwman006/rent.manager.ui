@@ -3,7 +3,7 @@ import { Avatar, Card, Empty, Listy, notification, Spin, Tag } from "antd";
 import { MailOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router";
 import {  } from "../../api/api";
-import { TenantInvitationDetailsDTO } from "../../models/user";
+import { LeaseInvitationDetailsDTO } from "../../models/user";
 import { getActiveInvitations } from "../../services/invitationService";
 
 const { Meta } = Card;
@@ -16,7 +16,7 @@ export default function Invitations({
   jwtToken: string | undefined;
 }) {
   const navigate = useNavigate();
-  const [invitations, setInvitations] = useState<TenantInvitationDetailsDTO[]>([]);
+  const [invitations, setInvitations] = useState<LeaseInvitationDetailsDTO[]>([]);
   const [loading, setLoading] = useState(false);
     const [notificationApi, notificationContextHolder] = notification.useNotification();
 
@@ -61,7 +61,7 @@ export default function Invitations({
 
         </div>
       ) : (
-        <Listy<TenantInvitationDetailsDTO>
+        <Listy<LeaseInvitationDetailsDTO>
           items={invitations}
           rowKey="id"
           itemRender={(item) => (

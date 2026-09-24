@@ -1,4 +1,4 @@
-import { TenantDetailsDTO, TenantInvitationDetailsDTO } from "./user";
+import { LeaseInvitationDetailsDTO, TenantDetailsDTO } from "./user";
 
 // Mapped from backend Lease entity
 export enum PaymentPeriod
@@ -45,8 +45,8 @@ export interface LeaseDetailsDTO {
   rent: RentDTO,
   fullLeasePaymentRequired:boolean;
   status: LeaseStatus;
-  tenant?: TenantDetailsDTO;
-  tenantInvitations?: TenantInvitationDetailsDTO[];
+  tenant: TenantDetailsDTO;
+  invitations: LeaseInvitationDetailsDTO[];
 }
 
 export interface RentDTO{

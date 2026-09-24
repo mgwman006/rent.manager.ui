@@ -2,11 +2,11 @@ import { NotificationInstance } from "antd/es/notification/interface";
 import { leaseInvitationApi } from "../api/api";
 import { LeaseCreateDTO, LeaseDetailsDTO } from "../models/lease";
 import { ApiError } from "../models/error";
-import { TenantInvitationCreateDTO, TenantInvitationDetailsDTO } from "../models/user";
+import { LeaseInvitationCreateDTO, LeaseInvitationDetailsDTO } from "../models/user";
 
 
 
-export const sentInvite = async (requestBody:TenantInvitationCreateDTO, token:string, notificationApi:NotificationInstance) :Promise<TenantInvitationDetailsDTO | null> => {
+export const sentInvite = async (requestBody:LeaseInvitationCreateDTO, token:string, notificationApi:NotificationInstance) :Promise<LeaseInvitationDetailsDTO | null> => {
     try {
         const data = await leaseInvitationApi.create(requestBody, token);
         notificationApi.success({
@@ -28,7 +28,7 @@ export const sentInvite = async (requestBody:TenantInvitationCreateDTO, token:st
     }
 }
 
- export const getActiveInvitations = async (phoneNumber:string, jwtToken:string,notificationApi:NotificationInstance): Promise<TenantInvitationDetailsDTO[]> => {
+ export const getActiveInvitations = async (phoneNumber:string, jwtToken:string,notificationApi:NotificationInstance): Promise<LeaseInvitationDetailsDTO[]> => {
     if (!phoneNumber || !jwtToken) {
         notificationApi.error({
              message: "Fail to load invites", 

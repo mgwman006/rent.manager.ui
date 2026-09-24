@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button, Card, Col, Descriptions, notification, Result, Row, Spin, Tag, Typography } from "antd";
 import { leaseApi, leaseInvitationApi } from "../../api/api";
-import { AccountState, TenantInvitationDetailsDTO } from "../../models/user";
+import { AccountState, LeaseInvitationDetailsDTO } from "../../models/user";
 import { useAccount } from "../../store/account/AccountContext";
 import { LeaseDetailsDTO } from "../../models/lease";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
@@ -15,7 +15,7 @@ const tenantManagerUrl = import.meta.env.VITE_TENANT_MANAGER_URL?.trim();
 export default function InvitationDetails() {
   const { invitationToken } = useParams();
   const navigate = useNavigate();
-  const [invitation, setInvitation] = useState<TenantInvitationDetailsDTO | null>(null);
+  const [invitation, setInvitation] = useState<LeaseInvitationDetailsDTO | null>(null);
   const [lease,setLease] = useState<LeaseDetailsDTO | null> (null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);

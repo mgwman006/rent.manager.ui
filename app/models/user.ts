@@ -32,7 +32,7 @@ export interface Tenant
     email : string;
 }
 
-export interface TenantInvitationDetailsDTO
+export interface LeaseInvitationDetailsDTO
 {
   leaseId: number;
   id: number;
@@ -47,7 +47,7 @@ export interface TenantInvitationDetailsDTO
   sentAt: string;
 }
 
-export interface TenantInvitationCreateDTO
+export interface LeaseInvitationCreateDTO
 {
   leaseId: number;
   firstName: string;

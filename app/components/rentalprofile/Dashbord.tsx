@@ -16,7 +16,7 @@ import { useNavigate } from "react-router";
 import { useAccount } from "../../store/account/AccountContext";
 import Invitations from "../invitation/Invitations";
 import { getActiveInvitations } from "../../services/invitationService";
-import { TenantInvitationDetailsDTO } from "../../models/user";
+import { LeaseInvitationDetailsDTO } from "../../models/user";
 import { getLeasesAllLeases } from "../../services/leaseService";
 
 const { Meta } = Card;
@@ -32,7 +32,7 @@ export default function Dashboard() {
   const [leaseCount, setLeaseCount] = useState(0);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [invitesCount,setInvitesCount] = useState<number>(0);
-  const [invitations, setInvitations] = useState<TenantInvitationDetailsDTO[]>([]);
+  const [invitations, setInvitations] = useState<LeaseInvitationDetailsDTO[]>([]);
 
 
   

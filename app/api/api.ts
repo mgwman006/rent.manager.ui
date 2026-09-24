@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ApiResponse } from '../models/common';
 import { ApiError } from '../models/error';
-import { MembershipDetailsDTO, TenantInvitationCreateDTO, TenantInvitationDetailsDTO } from '../models/user';
+import { MembershipDetailsDTO, LeaseInvitationCreateDTO, LeaseInvitationDetailsDTO } from '../models/user';
 import { CreateRentalProfileDTO, RentalProfileDetailsDTO } from '../models/rentalprofile';
 import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, RentSummaryDTO } from '../models/lease';
 
@@ -191,8 +191,8 @@ export const leaseApi = {
 
 export const leaseInvitationApi = {
 
-  create: async (requestBody:TenantInvitationCreateDTO, token:string) => {
-    const res = await apiClient.post<ApiResponse<TenantInvitationDetailsDTO>>(
+  create: async (requestBody:LeaseInvitationCreateDTO, token:string) => {
+    const res = await apiClient.post<ApiResponse<LeaseInvitationDetailsDTO>>(
       `/tenant-invitations`,
       requestBody,
       {
@@ -205,7 +205,7 @@ export const leaseInvitationApi = {
     return handleResponse(res.data);
   },
     getActiveInvitationsByPhoneNumber: async (phoneNumber :string, jwtToken: string) => {
-        const results = await apiClient.get<ApiResponse<TenantInvitationDetailsDTO[]>>(`/lease-invitations/phone/${phoneNumber}`,
+        const results = await apiClient.get<ApiResponse<LeaseInvitationDetailsDTO[]>>(`/lease-invitations/phone/${phoneNumber}`,
             {
                 headers: {
                 'Authorization': `Bearer ${jwtToken}`
@@ -216,7 +216,7 @@ export const leaseInvitationApi = {
     },
 
   getByInvitationToken: async (invitationToken:string,jwtToken: string) => {
-    const res = await apiClient.get<ApiResponse<TenantInvitationDetailsDTO>>(`/lease-invitations/${invitationToken}`,
+    const res = await apiClient.get<ApiResponse<LeaseInvitationDetailsDTO>>(`/lease-invitations/${invitationToken}`,
         {
             headers: {
             'Authorization': `Bearer ${jwtToken}`
@@ -227,7 +227,7 @@ export const leaseInvitationApi = {
   },
 
   acceptInvitation: async (invitationToken:string, id:number, jwtToken: string) => {
-    const res = await apiClient.post<ApiResponse<TenantInvitationDetailsDTO>>(
+    const res = await apiClient.post<ApiResponse<LeaseInvitationDetailsDTO>>(
       `/lease-invitations/${invitationToken}/landlord/accept?landlordId=${id}`,
       null,
       {
