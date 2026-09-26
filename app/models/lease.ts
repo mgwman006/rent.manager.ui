@@ -58,7 +58,7 @@ export interface RentDTO{
 
 export interface LeaseCreateDTO {
   rentalProfileId: number;
-  unitId: number;
+  unitId?: number;
   tenantId?: number;
   tenantFirstName?: string;
   tenantLastName?: string;

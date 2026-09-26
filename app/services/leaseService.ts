@@ -63,6 +63,13 @@ export const createLease = async (
     token: string,
     notificationApi: NotificationInstance,
 ): Promise<LeaseDetailsDTO | null> => {
+    if (!lease.rent) {
+        notificationApi.error({
+            message: "Rent Details Required",
+            description: "Please enter the rent amount, currency, and frequency.",
+        });
+        return null;
+    }
     
     try {
         return await leaseApi.createLease(

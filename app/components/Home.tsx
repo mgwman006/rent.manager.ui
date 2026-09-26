@@ -10,7 +10,7 @@ const { useBreakpoint } = Grid;
 
 const navItems = [
   { key: 'dashborad', label: <RouterLink to="/rental-profile">Dash borad</RouterLink>, to: '/rental-profile' },
-  { key: 'leases', label: 'Leases', to: '#' },
+  { key: 'leases', label: <RouterLink to="/rental-profile/leases">Leases</RouterLink>, to: '/rental-profile/leases' },
   { key: 'properties', label: 'Properties', to: '#' },
   { key: 'tenants', label: 'Tenants', to: '#' },
 ];
