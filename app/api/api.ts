@@ -3,7 +3,7 @@ import { ApiResponse } from '../models/common';
 import { ApiError } from '../models/error';
 import { MembershipDetailsDTO, LeaseInvitationCreateDTO, LeaseInvitationDetailsDTO } from '../models/user';
 import { CreateRentalProfileDTO, RentalProfileDetailsDTO } from '../models/rentalprofile';
-import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, RentSummaryDTO } from '../models/lease';
+import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, MonthlyCollectionSummaryDTO, RentSummaryDTO } from '../models/lease';
 
 const apiUrl = import.meta.env.VITE_RENT_MANAGER_API_URL;
 
@@ -177,6 +177,19 @@ export const leaseApi = {
   getRentCollectionSummary: async (leaseId: number, token: string) => {
     const res = await apiClient.get<ApiResponse<RentSummaryDTO>>(
       `/leases/rent/summary/${leaseId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  getMonthlyCollectionSummary: async (rentalProfileId: number, month:number, year: number, token: string) => {
+    const res = await apiClient.get<ApiResponse<MonthlyCollectionSummaryDTO>>(
+      `/leases/rental-profile/${rentalProfileId}/monthly-rent-summary?month=${month}&year=${year}`,
       {
         headers: {
           'Authorization': `Bearer ${token}`

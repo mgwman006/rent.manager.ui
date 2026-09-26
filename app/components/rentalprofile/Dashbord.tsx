@@ -8,7 +8,7 @@ import {
   RightOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
-import { Avatar, Badge, Card, Col, Flex, Modal, notification, Progress, Row, Tag, Typography } from "antd";
+import { Avatar, Badge, Card, Col, DatePicker, Flex, Input, Modal, notification, Progress, Row, Tag, Typography } from "antd";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
 import { RentalProfileDetailsDTO } from "../../models/rentalprofile";
 import { useEffect, useState } from "react";
@@ -17,7 +17,9 @@ import { useAccount } from "../../store/account/AccountContext";
 import Invitations from "../invitation/Invitations";
 import { getActiveInvitations } from "../../services/invitationService";
 import { LeaseInvitationDetailsDTO } from "../../models/user";
-import { getLeasesAllLeases } from "../../services/leaseService";
+import { getLeasesAllLeases, getMonthlyCollectionSummary } from "../../services/leaseService";
+import { MonthlyCollectionSummaryDTO } from "../../models/lease";
+import dayjs from "dayjs";
 
 const { Meta } = Card;
 const { Title, Text } = Typography;
@@ -33,6 +35,7 @@ export default function Dashboard() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [invitesCount,setInvitesCount] = useState<number>(0);
   const [invitations, setInvitations] = useState<LeaseInvitationDetailsDTO[]>([]);
+  const [monthlyCollectionSummary, setMonthlyCollectionSummary] = useState<MonthlyCollectionSummaryDTO>();
 
 
   
@@ -60,6 +63,27 @@ export default function Dashboard() {
     setInvitations(invites);
   }
 
+  const loadCurrentMonthCollectionSummary = async (
+    rentalProfileId: number,
+    month: number,
+    year: number,
+    token: string
+) => {
+    
+
+    const response = await getMonthlyCollectionSummary(
+        rentalProfileId,
+        month,
+        year,
+        token,
+        notificationApi
+    );
+
+    if (response) {
+        setMonthlyCollectionSummary(response);
+    }
+};
+
   useEffect(() => {
     const jwtToken = accountState.accountDetails?.token;
     const currentProfile = rentalProfileState.rentalProfile;
@@ -70,6 +94,11 @@ export default function Dashboard() {
 
     setRentalProfile(currentProfile);
     loadLeasesCount(currentProfile.id, jwtToken);
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // JS months are 0-based
+    loadCurrentMonthCollectionSummary(currentProfile.id, currentMonth,currentYear,jwtToken);
   }, []);
 
   useEffect(() => {
@@ -163,43 +192,63 @@ const summaryCards = [
           <Invitations phoneNumber={rentalProfile?.phoneNumber ?? ""} jwtToken={accountState.accountDetails?.token} />
       </Modal>
 
-      {/* <Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card style={{ borderRadius: 16, border: "1px solid #eaf0f6", boxShadow: "none" }} bodyStyle={{ padding: 20 }}>
             <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-              <Col>
+              <Col xs={24} sm={24} md={21} lg={21} xl={21} xxl={21}>
                 <Title level={5} style={{ margin: 0 }}>Rent Collection</Title>
               </Col>
-              <Col>
-                <Text type="secondary">Current month</Text>
+              <Col xs={24} sm={24} md={3} lg={3} xl={3} xxl={3}>
+               <DatePicker
+                  picker="month"
+                  format="MMMM YYYY"
+                  style={{ width: "100%" }}
+                  defaultValue={dayjs()}
+
+                  onChange={(date) => {
+                      if (!date) return;
+
+                      const month = date.month() + 1;
+                      const year = date.year();
+
+                      loadCurrentMonthCollectionSummary(
+                          rentalProfileState?.rentalProfile?.id ?? 0,
+                          month,
+                          year,
+                          accountState?.accountDetails?.token ?? ""
+
+                      );
+                  }}
+              />
               </Col>
             </Row>
 
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={8}>
                 <Text type="secondary">Expected</Text>
-                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#0f172a" }}>TZS 4,500,000</div>
+                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#0f172a" }}>{monthlyCollectionSummary?.totalExpectedAmount}</div>
               </Col>
               <Col xs={24} sm={8}>
                 <Text type="secondary">Collected</Text>
-                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#16a34a" }}>TZS 3,200,000</div>
+                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#16a34a" }}>{monthlyCollectionSummary?.totalAmountPaid}</div>
               </Col>
               <Col xs={24} sm={8}>
                 <Text type="secondary">Outstanding</Text>
-                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#ef4444" }}>TZS 1,300,000</div>
+                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#ef4444" }}>{monthlyCollectionSummary?.totalOutstandingAmount}</div>
               </Col>
             </Row>
 
             <div style={{ marginTop: 20 }}>
-              <Progress percent={71} strokeColor="#22c55e" trailColor="#e5e7eb" showInfo={false} />
+              <Progress percent={monthlyCollectionSummary?.progressPercentage} strokeColor="#22c55e" trailColor="#e5e7eb" showInfo={false} />
               <div style={{ marginTop: 8 }}>
-                <Tag color="green">71% collected</Tag>
+                <Tag color="green">{monthlyCollectionSummary?.progressPercentage}% collected</Tag>
               </div>
             </div>
           </Card>
         </Col>
 
-      </Row> */}
+      </Row>
     </div>
   );
 }

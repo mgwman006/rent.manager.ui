@@ -108,3 +108,10 @@ export enum PaymentBlockStatus
   UNPAID = "UNPAID",
 }
 
+export interface MonthlyCollectionSummaryDTO {
+  totalExpectedAmount: number;
+  totalAmountPaid: number;
+  totalOutstandingAmount: number;
+  progressPercentage:number
+}
+

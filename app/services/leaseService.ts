@@ -1,6 +1,6 @@
 import { NotificationInstance } from "antd/es/notification/interface";
 import { leaseApi } from "../api/api";
-import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, RentSummaryDTO } from "../models/lease";
+import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, MonthlyCollectionSummaryDTO, RentSummaryDTO } from "../models/lease";
 import { ApiError } from "../models/error";
 
 
@@ -114,4 +114,22 @@ export const updateLeaseTerms = async (leaseId:number,leaseTerms:LeaseTermsUpdat
             });
             return null;
         }
+}
+
+
+export const getMonthlyCollectionSummary = async (rentalProfileId:number,month:number, year:number, token: string, notificationApi:NotificationInstance) :Promise<MonthlyCollectionSummaryDTO | null> => {
+    try {
+        return await leaseApi.getMonthlyCollectionSummary(rentalProfileId,month,year, token);
+    } catch (error: any) {
+        const apiError = error as ApiError;
+        notificationApi.error({
+            message: apiError.message ?? "Unable to load monthly rent summary",
+            description: apiError.details
+                ? typeof apiError.details === "string"
+                    ? apiError.details
+                    : JSON.stringify(apiError.details)
+                : "The rent details could not be loaded.",
+        });
+        return null;
+    }
 }
