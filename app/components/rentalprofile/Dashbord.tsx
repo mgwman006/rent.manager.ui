@@ -36,28 +36,7 @@ export default function Dashboard() {
 
 
   
-  const summaryCards = [
-    { 
-      title: "Leases", 
-      value: leaseCount, 
-      icon: <BookOutlined />, 
-      color: "#F7FFF2" ,
-      onClick: () => navigate("leases"),
-    },
-    {
-      title: "Invitations",
-      value: `You have ${invitesCount} invitaions to respond`,
-      icon: <Badge count={invitesCount}><BellOutlined /></Badge>,    
-      color: "#EDF4FF",
-      buttonStyle: { backgroundColor: "info", borderColor: "#EDF4FF", color: "#fff" },
-      buttonText: "View more",
-      buttonIcon: <ArrowRightOutlined />,
-      onClick: () => setIsInviteModalOpen(true),
-    },
-    //   { title: "Tenants", value: 0, icon: <TeamOutlined />, color: "#f59e0b" },
-    //   { title: "Properties", value: 0, icon: <HomeOutlined />, color: "#22c55e" },
-    //   { title: "Units", value: 0, icon: <BankOutlined />, color: "#2563eb" },
-    ];
+  
 
   const loadLeasesCount = async (rentalProfileId: number, jwtToken: string) => {
     const data = await getLeasesAllLeases(rentalProfileId, jwtToken, notificationApi);
@@ -91,8 +70,40 @@ export default function Dashboard() {
 
     setRentalProfile(currentProfile);
     loadLeasesCount(currentProfile.id, jwtToken);
-    loadInvitations(currentProfile.phoneNumber, jwtToken);
-  }, [accountState.accountDetails?.token, rentalProfileState.rentalProfile]);
+  }, []);
+
+  useEffect(() => {
+    const token = accountState.accountDetails?.token;
+
+    if (!rentalProfile?.phoneNumber || !token) {
+        return;
+    }
+
+    loadInvitations(rentalProfile?.phoneNumber, token);
+}, [rentalProfile?.phoneNumber, accountState.accountDetails?.token]);
+
+const summaryCards = [
+    { 
+      title: "Leases", 
+      value: leaseCount, 
+      icon: <BookOutlined />, 
+      color: "#F7FFF2" ,
+      onClick: () => navigate("leases"),
+    },
+    {
+      title: "Invitations",
+      value: `You have ${invitesCount} invitaions to respond`,
+      icon: <Badge count={invitesCount}><BellOutlined /></Badge>,    
+      color: "#EDF4FF",
+      buttonStyle: { backgroundColor: "info", borderColor: "#EDF4FF", color: "#fff" },
+      buttonText: "View more",
+      buttonIcon: <ArrowRightOutlined />,
+      onClick: () => setIsInviteModalOpen(true),
+    },
+    //   { title: "Tenants", value: 0, icon: <TeamOutlined />, color: "#f59e0b" },
+    //   { title: "Properties", value: 0, icon: <HomeOutlined />, color: "#22c55e" },
+    //   { title: "Units", value: 0, icon: <BankOutlined />, color: "#2563eb" },
+    ];
 
   return (
     <div>
@@ -140,11 +151,19 @@ export default function Dashboard() {
           open={isInviteModalOpen}
           onCancel={() => setIsInviteModalOpen(false)}
           footer={null}
+          width={{
+                    xs: '100%',
+                    sm: '90%',
+                    md: '80%',
+                    lg: '50%',
+                    xl: '50%',
+                    xxl: '50%',
+                }}
       >
           <Invitations phoneNumber={rentalProfile?.phoneNumber ?? ""} jwtToken={accountState.accountDetails?.token} />
       </Modal>
 
-      <Row gutter={[16, 16]}>
+      {/* <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card style={{ borderRadius: 16, border: "1px solid #eaf0f6", boxShadow: "none" }} bodyStyle={{ padding: 20 }}>
             <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
@@ -180,7 +199,7 @@ export default function Dashboard() {
           </Card>
         </Col>
 
-      </Row>
+      </Row> */}
     </div>
   );
 }

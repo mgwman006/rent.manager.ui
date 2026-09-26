@@ -78,6 +78,12 @@ export default function AppLayout() {
         <Sider
           breakpoint="lg"
           collapsedWidth="0"
+           style={{
+            position: 'sticky',
+            top: 64,
+            height: 'calc(100vh - 64px)',
+            overflow: 'auto',
+          }}
           onBreakpoint={(broken) => {
             console.log(broken);
           }}
@@ -86,7 +92,9 @@ export default function AppLayout() {
           }}
         >
           <div className="demo-logo-vertical" />
-          <Menu theme="dark" mode="inline" defaultSelectedKeys={['dashborad']} items={navItems} />
+          <Menu             
+              style={{ height: '100%', borderInlineEnd: 0 }}
+              mode="inline" defaultSelectedKeys={['dashborad']} items={navItems} />
         </Sider>
 
         <Layout>

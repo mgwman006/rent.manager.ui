@@ -89,7 +89,6 @@ export default function Invitations({
                 }
                 description={
                   <div>
-                    <div>{item.phoneNumber}</div>
                     <div>Sent: {item.sentAt ?? "-"}</div>
                     <div>Expires: {item.expiresAt ?? "-"}</div>
                   </div>
