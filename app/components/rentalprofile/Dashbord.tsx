@@ -255,15 +255,15 @@ const summaryCards = [
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={8}>
                 <Text type="secondary">Expected</Text>
-                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#0f172a" }}>{monthlyCollectionSummary?.totalExpectedAmount}</div>
+                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#0f172a" }}>{new Intl.NumberFormat("en-TZ").format(monthlyCollectionSummary?.totalExpectedAmount ?? 0)} TZS</div>
               </Col>
               <Col xs={24} sm={8}>
                 <Text type="secondary">Collected</Text>
-                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#16a34a" }}>{monthlyCollectionSummary?.totalAmountPaid}</div>
+                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#16a34a" }}>{new Intl.NumberFormat("en-TZ").format(monthlyCollectionSummary?.totalAmountPaid ?? 0)} TZS</div>
               </Col>
               <Col xs={24} sm={8}>
                 <Text type="secondary">Outstanding</Text>
-                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#ef4444" }}>{monthlyCollectionSummary?.totalOutstandingAmount}</div>
+                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 24, color: "#ef4444" }}>{new Intl.NumberFormat("en-TZ").format(monthlyCollectionSummary?.totalOutstandingAmount ?? 0)} TZS</div>
               </Col>
             </Row>
 

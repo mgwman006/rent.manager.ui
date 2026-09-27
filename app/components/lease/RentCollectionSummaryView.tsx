@@ -40,19 +40,19 @@ export default function RentCollectionSummaryView({
     const summaryCards = [
         {
             title: "Total Lease Amount",
-            value: rentSummary?.totalExpectedAmount,
+            value: <div>{new Intl.NumberFormat("en-TZ").format(rentSummary?.totalExpectedAmount ?? 0)} TZS</div> ,
             icon: <WalletOutlined />,
             color: "#F5F9FC",
         },
         {
             title: "Total Paid Amount",
-            value: rentSummary?.totalPaidAmount,
+            value: <div>{new Intl.NumberFormat("en-TZ").format(rentSummary?.totalPaidAmount ?? 0)} TZS</div> ,
             icon: <CreditCardFilled />,
             color: "#F7FFF2",
         },
         {
             title: "Total Outstanding Amount",
-            value: rentSummary?.totalOutstandingAmount,
+            value: <div>{new Intl.NumberFormat("en-TZ").format(rentSummary?.totalOutstandingAmount ?? 0)} TZS</div> ,
             icon: <ScheduleOutlined />,
             color: "#FAE6E6",
         },
@@ -94,26 +94,32 @@ export default function RentCollectionSummaryView({
         key: "endDate",
     },
     {
-        title: "Amount",
+        title: "Amount (TZS)",
         dataIndex: "amount",
         key: "amount",
+        render: (amount: number) =>
+            `${new Intl.NumberFormat("en-TZ").format(amount)}`,
     },
     {
-        title: "Paid Amount",
+        title: "Paid Amount (TZS)",
         dataIndex: "paidAmount",
         key: "paidAmount",
+        render: (paidAmount: number) =>
+            `${new Intl.NumberFormat("en-TZ").format(paidAmount)}`,
     },
     {
-        title: "Outstanding Amount",
+        title: "Outstanding Amount (TZS)",
         dataIndex: "outstandingAmount",
         key: "outstandingAmount",
+        render: (outstandingAmount: number) =>
+            `${new Intl.NumberFormat("en-TZ").format(outstandingAmount)}`,
     },
     {
         title: "Status",
         dataIndex: "status",
         key: "status",
         render: (status) => (
-            <Tag color={status === PaymentBlockStatus.UNPAID ? "red" : "green"}>
+            <Tag color={status === PaymentBlockStatus.UNPAID ? "red" : "green"} variant="solid">
                 {status}
             </Tag>
         ),
