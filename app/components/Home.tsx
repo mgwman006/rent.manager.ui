@@ -1,28 +1,68 @@
-import { Typography,Layout, Image, Grid, Drawer, Button, Card, Row, Divider, Col, Space, Tag, Flex, Menu, Avatar } from 'antd';
-import { MenuOutlined, UserAddOutlined, UserOutlined, UserSwitchOutlined } from '@ant-design/icons';
-import { Outlet, Link as RouterLink } from 'react-router-dom';
+import {
+  Typography,
+  Layout,
+  Image,
+  Grid,
+  Drawer,
+  Button,
+  Menu,
+  Avatar} from 'antd';
+
+import {
+  DashboardFilled,
+  DashboardOutlined,
+  FileDoneOutlined,
+  FileFilled,
+  HomeFilled,
+  MenuOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+
+import { Outlet, Link } from 'react-router-dom';
 import { useState } from 'react';
 import Sider from 'antd/es/layout/Sider';
 
-
-const { Header, Footer, Content } = Layout;
+const { Header, Content } = Layout;
 const { useBreakpoint } = Grid;
 
 const navItems = [
-  { key: 'dashborad', label: <RouterLink to="/rental-profile">Dash borad</RouterLink>, to: '/rental-profile' },
-  { key: 'leases', label: <RouterLink to="/rental-profile/leases">Leases</RouterLink>, to: '/rental-profile/leases' },
-  { key: 'properties', label: 'Properties', to: '#' },
-  { key: 'tenants', label: 'Tenants', to: '#' },
+  { key: 'dashborad', label: <Link to="/rental-profile"><Avatar size="small" icon={<DashboardFilled />}/> Dash borad</Link>, to: '/rental-profile' },
+  { key: 'leases', label: <Link to="/rental-profile/leases"><Avatar size={'small'} icon={<FileFilled />}/> Leases</Link>, to: '/rental-profile/leases' },
+  { key: 'properties', label: <Link to="#" ><Avatar size="small" icon={<HomeFilled />}/> Properties</Link> , to: '#' },
+  { key: 'tenants', label: <Link to="#" ><Avatar size="small" icon={<UserOutlined />}/> Tenants</Link> , to: '#' },
 ];
 
 export default function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+
   const screens = useBreakpoint();
-  const isMobile = !screens.md; // <768px = mobile
+
+  // lg = 992px
+  const isMobile = !screens.lg;
+
+  const handleMenuClick = () => {
+    if (isMobile) {
+      setDrawerOpen(false);
+    }
+  };
+
+  const menu = (
+    <Menu
+      mode="inline"
+      defaultSelectedKeys={['home']}
+      style={{
+        height: '100%',
+        borderInlineEnd: 0,
+      }}
+      items={navItems}
+      onClick={handleMenuClick}
+    />
+  );
 
   return (
-          
-    <Layout>
+    <Layout style={{ minHeight: '100vh' }}>
+
+      {/* HEADER */}
       <Header
         style={{
           position: 'sticky',
@@ -32,226 +72,107 @@ export default function AppLayout() {
           padding: 0,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           background: '#0F172A',
           height: 64,
         }}
       >
+
         {/* LOGO */}
-        <div style={{
-          // background: '#fff',
-          height: 64,
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 16px',
-          flexShrink: 0,
-        }}>
+        <div
+          style={{
+            background: '#fff',
+            height: 64,
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0 16px',
+            flexShrink: 0,
+          }}
+        >
           <Image
             preview={false}
             src="/tante-logo.svg"
-            width={96}          // fixed px — never grows
-            height={29}         // keeps aspect ratio locked
+            width={96}
+            height={29}
             style={{ display: 'block' }}
           />
-
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            paddingRight: 16,
-          }}
-        >
-          <Avatar size={50} icon={<UserOutlined />} />
-        </div>
+        {/* MOBILE MENU BUTTON */}
+        {isMobile && (
+          <Button
+            type="text"
+            icon={<MenuOutlined />}
+            onClick={() => setDrawerOpen(true)}
+            style={{
+              color: '#fff',
+              fontSize: 20,
+              marginLeft: 8,
+            }}
+          />
+        )}
 
-      
-        
-
-       
+        {/* DESKTOP HEADER MENU */}
+        {!isMobile && (
+          <Menu
+            theme="dark"
+            mode="horizontal"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              background: 'transparent',
+            }}
+          />
+        )}
       </Header>
 
-
       <Layout>
-        <Sider
-          breakpoint="lg"
-          collapsedWidth="0"
-           style={{
-            position: 'sticky',
-            top: 64,
-            height: 'calc(100vh - 64px)',
-            overflow: 'auto',
-          }}
-          onBreakpoint={(broken) => {
-            console.log(broken);
-          }}
-          onCollapse={(collapsed, type) => {
-            console.log(collapsed, type);
+
+        {/* DESKTOP SIDEBAR */}
+        {!isMobile && (
+          <Sider
+            width={240}
+            style={{
+              position: 'sticky',
+              top: 64,
+              height: 'calc(100vh - 64px)',
+              overflow: 'auto',
+            }}
+          >
+            {menu}
+          </Sider>
+        )}
+
+        {/* MOBILE DRAWER */}
+        <Drawer
+          title="Tante"
+          placement="left"
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          width={280}
+          styles={{
+            body: {
+              padding: 0,
+            },
           }}
         >
-          <div className="demo-logo-vertical" />
-          <Menu             
-              style={{ height: '100%', borderInlineEnd: 0 }}
-              mode="inline" defaultSelectedKeys={['dashborad']} items={navItems} />
-        </Sider>
+          {menu}
+        </Drawer>
 
-        <Layout>
-          <Content style={{ backgroundColor: '#fff' }}>
+        {/* CONTENT */}
+        <Layout
+          style={{
+            padding: isMobile
+              ? '0 12px 16px'
+              : '0 24px 24px',
+            minWidth: 0,
+          }}
+        >
+          <Content>
             <Outlet />
           </Content>
         </Layout>
+
       </Layout>
-
-      
-
-      {/* <Footer style={{ backgroundColor: '#0F172A' }}>
-       
-          <Row gutter={[32, 32]}>
-            <Col xs={24} sm={12} md={12} lg={6}>
-              <Title level={2} style={{ margin: 0, color: "white" }}>
-                <span style={{ color: "#14b8a6" }}>t</span>ante
-              </Title>
-
-              <Text style={{ color: "#94a3b8", display: "block", marginTop: 16 }}>
-                Smart Real Estate. Better Future.
-                <br />
-                Built for Tanzanian property owners.
-              </Text>
-            </Col>
-
-            <Col xs={24} sm={12} md={12} lg={6}>
-              <Flex vertical>
-                <Text strong style={{ color: "#64748b" }}>
-                  PRODUCT
-                </Text>
-                <Flex vertical style={{ marginTop: 10 }}>
-                  <Link 
-                    href="#"    
-                    style={{
-                      color: "#94a3b8",
-                      marginTop:2
-                    }}
-                  >
-                      Features
-                  </Link>
-                  <Link 
-                    href="#"
-                    style={{
-                      color: "#94a3b8",
-                      marginTop:2
-                    }}
-                  >
-                    Pricing
-                  </Link>
-                  <Link 
-                    href="#"
-                    style={{
-                      color: "#94a3b8",
-                      marginTop:2
-                    }}
-                  >
-                    Mobile App
-                  </Link>
-                  <Link 
-                    href="#"
-                    style={{
-                      color: "#94a3b8",
-                      marginTop:2
-                    }}
-                  >
-                    Changelog
-                  </Link>
-                </Flex>
-              </Flex>
-            </Col>
-
-            <Col xs={24} sm={12} md={12} lg={6}>
-              <Flex vertical>
-                <Text strong style={{ color: "#64748b" }}>
-                  COMPANY
-                </Text>
-                <Flex vertical style={{ marginTop: 10 }}>
-                  <Link 
-                    href="#"    
-                    style={{
-                      color: "#94a3b8",
-                      marginTop:2
-                    }}
-                  >
-                      Blog
-                  </Link>
-                  <Link 
-                    href="#"
-                    style={{
-                      color: "#94a3b8",
-                      marginTop:2
-                    }}
-                  >
-                    Careers
-                  </Link>
-                  <Link 
-                    href="#"
-                    style={{
-                      color: "#94a3b8",
-                      marginTop:2
-                    }}
-                  >
-                    Contact
-                  </Link>
-                </Flex>
-              </Flex>
-            </Col>
-
-            <Col xs={24} sm={12} md={12} lg={6}>
-              <Flex vertical>
-                <Text strong style={{ color: "#64748b" }}>
-                  LEGAL
-                </Text>
-                <Flex vertical style={{ marginTop: 10 }}>
-                  <Link 
-                    href="#"    
-                    style={{
-                      color: "#94a3b8",
-                      marginTop:2
-                    }}
-                  >
-                      Privacy Policy
-                  </Link>
-                  <Link 
-                    href="#"
-                    style={{
-                      color: "#94a3b8",
-                      marginTop:2
-                    }}
-                  >
-                    Terms of Service
-                  </Link>
-                  
-                </Flex>
-              </Flex>
-              
-            </Col>
-          </Row>
-
-          <Divider style={{ borderColor: "#1e293b", margin: "32px 0 24px" }} />
-
-          <Row gutter={[16, 16]} justify="space-between" align="middle">
-            <Col xs={24} md={12}>
-              <Text style={{ color: "#64748b" }}>
-                © 2026 tante Technologies (Pty) Ltd. All rights reserved.
-              </Text>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Space wrap style={{ justifyContent: "flex-end", width: "100%" }}>
-                <Tag color="default">🇹🇿 Made in Tanzania</Tag>
-              </Space>
-            </Col>
-          </Row>
-      </Footer> */}
     </Layout>
-
   );
 }
