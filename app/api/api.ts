@@ -4,6 +4,8 @@ import { ApiError } from '../models/error';
 import { MembershipDetailsDTO, LeaseInvitationCreateDTO, LeaseInvitationDetailsDTO } from '../models/user';
 import { CreateRentalProfileDTO, RentalProfileDetailsDTO } from '../models/rentalprofile';
 import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, MonthlyCollectionSummaryDTO, RentSummaryDTO } from '../models/lease';
+import { PaymentTransactionCreateDTO } from '../models/payments';
+import { recordPayment } from '../services/paymentService';
 
 const apiUrl = import.meta.env.VITE_RENT_MANAGER_API_URL;
 
@@ -201,7 +203,6 @@ export const leaseApi = {
   },
 };
 
-
 export const leaseInvitationApi = {
 
   create: async (requestBody:LeaseInvitationCreateDTO, token:string) => {
@@ -263,6 +264,24 @@ export const leaseInvitationApi = {
 
     return handleResponse(res.data);
   }
+};
+
+export const paymentApi = {
+
+  recordPayment: async (rentalprofileId:number,requestBody: PaymentTransactionCreateDTO, token: string) => {
+    const res = await apiClient.post<ApiResponse<String>>(
+      `/payment-blocks/rental-profile/${rentalprofileId}/record-payment`,
+      requestBody,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  }
+ 
 };
 
 export function handleResponse<T>(response: ApiResponse<T>): T {

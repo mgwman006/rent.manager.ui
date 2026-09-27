@@ -25,7 +25,7 @@ const OFF = "#F8FAFC";
 const authUrl = import.meta.env.VITE_AUTH_URL?.trim();
 const rentManagerUrl = import.meta.env.VITE_RENT_MANAGER_URL?.trim();
 
-function isTokenExpired(token?: string): boolean {
+export function isTokenExpired(token?: string): boolean {
   if (!token) {
     return true;
   }

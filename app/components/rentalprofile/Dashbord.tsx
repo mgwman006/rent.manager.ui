@@ -20,14 +20,17 @@ import { LeaseInvitationDetailsDTO } from "../../models/user";
 import { getLeasesAllLeases, getMonthlyCollectionSummary } from "../../services/leaseService";
 import { MonthlyCollectionSummaryDTO } from "../../models/lease";
 import dayjs from "dayjs";
+import { isTokenExpired } from "../HomePage";
 
 const { Meta } = Card;
 const { Title, Text } = Typography;
 
+const authUrl = import.meta.env.VITE_AUTH_URL?.trim();
+const rentManagerUrl = import.meta.env.VITE_RENT_MANAGER_URL?.trim();
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { accountState } = useAccount();
+  const { accountState, dispatchAccountState } = useAccount();
   const { rentalProfileState } = useRentalProfile();
   const [notificationApi, contextHolder] = notification.useNotification();
   const [rentalProfile, setRentalProfile] = useState<RentalProfileDetailsDTO | null>(null);
@@ -40,6 +43,21 @@ export default function Dashboard() {
 
   
   
+const navigateToAuth = (nextApp: string = "rent-manager", phone?: string) => {
+    if (!authUrl) {
+      console.error("VITE_AUTH_URL is not configured.");
+      return;
+    }
+
+    const outGoingUrlValue = nextApp === "rent-manager" ? rentManagerUrl : null;
+    if (!outGoingUrlValue) {
+      console.error("Unable to resolve outgoing URL for auth redirect.");
+      return;
+    }
+
+    const url = `${authUrl}?outGoingUrl=${encodeURIComponent(outGoingUrlValue)}&phoneNumber=${encodeURIComponent("")}`;
+    window.location.href = url;
+  };
 
   const loadLeasesCount = async (rentalProfileId: number, jwtToken: string) => {
     const data = await getLeasesAllLeases(rentalProfileId, jwtToken, notificationApi);
@@ -91,6 +109,16 @@ export default function Dashboard() {
     if (!jwtToken || !currentProfile || currentProfile==null) {
       return;
     }
+
+    if (isTokenExpired(jwtToken)) {
+        notificationApi.error({
+          message: "Session expired",
+          description: "Your sign-in session has expired. Please sign in again.",
+        });
+        dispatchAccountState({ type: "LOGOUT" });
+        navigateToAuth();
+        return;
+      }
 
     setRentalProfile(currentProfile);
     loadLeasesCount(currentProfile.id, jwtToken);

@@ -1,14 +1,88 @@
-import { Avatar, Alert, Card, Col, Row, Table, TableProps, Tag, Typography } from "antd";
-import { CreditCardFilled, ScheduleOutlined, WalletOutlined } from "@ant-design/icons";
+import { Avatar, Alert, Card, Col, Row, Table, TableProps, Tag, Typography, Button, Modal, Form, Radio, Input } from "antd";
+import { CreditCardFilled, CreditCardOutlined, ScheduleOutlined, WalletOutlined } from "@ant-design/icons";
 import { PaymentBlockStatus, PaymentBlockSummaryDTO, RentSummaryDTO } from "../../models/lease";
 import { NotificationInstance } from "antd/es/notification/interface";
 import { useEffect, useState } from "react";
 import { getRentSummary } from "../../services/leaseService";
+import { PaymentTransactionCreateDTO } from "../../models/payments";
+import { recordPayment } from "../../services/paymentService";
+import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
 
 const { Text } = Typography;
 const { Meta } = Card;
 
-const columns: TableProps<PaymentBlockSummaryDTO>["columns"] = [
+
+
+interface RentCollectionSummaryViewProps {
+    leaseId: number | null | undefined;
+    token:string;
+    notificationApi: NotificationInstance;
+
+}
+
+export default function RentCollectionSummaryView({
+    leaseId,
+    token,
+    notificationApi
+}: RentCollectionSummaryViewProps) {
+    const [rentSummary,setRentSummary] = useState<RentSummaryDTO|null>();
+    const [isPaymentModalOpen,setIsPaymentModalOpen] = useState<boolean>(false);
+    const [paymetTransactionForm] = Form.useForm<PaymentTransactionCreateDTO>();
+    const [selectedPaymentBlockId,setSelectedPaymentBlockId] = useState<number>(0);
+    const { rentalProfileState } = useRentalProfile();
+    
+
+
+    const loadRentSummary = async () => {
+        const resp = await getRentSummary(leaseId??0, token, notificationApi);
+        setRentSummary(resp);
+    }
+    const summaryCards = [
+        {
+            title: "Total Lease Amount",
+            value: rentSummary?.totalExpectedAmount,
+            icon: <WalletOutlined />,
+            color: "#F5F9FC",
+        },
+        {
+            title: "Total Paid Amount",
+            value: rentSummary?.totalPaidAmount,
+            icon: <CreditCardFilled />,
+            color: "#F7FFF2",
+        },
+        {
+            title: "Total Outstanding Amount",
+            value: rentSummary?.totalOutstandingAmount,
+            icon: <ScheduleOutlined />,
+            color: "#FAE6E6",
+        },
+    ];
+
+     useEffect(
+            () =>
+            {
+                loadRentSummary();
+            },[]
+    )
+
+    const openPaymentTransactionModal = (paymentBlockId:number) =>{
+        setIsPaymentModalOpen(true);
+        setSelectedPaymentBlockId(paymentBlockId);
+    }
+
+    const handleOnFinishPaymentForm = (values:PaymentTransactionCreateDTO) => {
+        const rentalProfileId = rentalProfileState.rentalProfile?.id;
+
+        if(!rentalProfileId){
+            notificationApi.error({
+                description:`Rental profile value is ${rentalProfileId}`,
+                message:"Invalid Rental Profile Id"
+            });
+            return;
+        }
+        recordPayment(values,rentalProfileId,token,notificationApi);
+    }
+    const columns: TableProps<PaymentBlockSummaryDTO>["columns"] = [
     {
         title: "Start Date",
         dataIndex: "startDate",
@@ -44,54 +118,13 @@ const columns: TableProps<PaymentBlockSummaryDTO>["columns"] = [
             </Tag>
         ),
     },
+    {
+        title: "Action",
+        render: (_, record) => (
+            <Button onClick={() => openPaymentTransactionModal(record.id)} color="primary" variant="solid" disabled={record.status === PaymentBlockStatus.PAID}> <CreditCardOutlined/> Record Payment</Button>
+        ),
+    },
 ];
-
-interface RentCollectionSummaryViewProps {
-    leaseId: number | null | undefined;
-    token:string;
-    notificationApi: NotificationInstance;
-
-}
-
-export default function RentCollectionSummaryView({
-    leaseId,
-    token,
-    notificationApi
-}: RentCollectionSummaryViewProps) {
-    const [rentSummary,setRentSummary] = useState<RentSummaryDTO|null>();
-
-
-    const loadRentSummary = async () => {
-        const resp = await getRentSummary(leaseId??0, token, notificationApi);
-        setRentSummary(resp);
-    }
-    const summaryCards = [
-        {
-            title: "Total Lease Amount",
-            value: rentSummary?.totalExpectedAmount,
-            icon: <WalletOutlined />,
-            color: "#F5F9FC",
-        },
-        {
-            title: "Total Paid Amount",
-            value: rentSummary?.totalPaidAmount,
-            icon: <CreditCardFilled />,
-            color: "#F7FFF2",
-        },
-        {
-            title: "Total Outstanding Amount",
-            value: rentSummary?.totalOutstandingAmount,
-            icon: <ScheduleOutlined />,
-            color: "#FAE6E6",
-        },
-    ];
-
-     useEffect(
-            () =>
-            {
-                loadRentSummary();
-            },[]
-    )
 
     return (
         <Card 
@@ -150,6 +183,89 @@ export default function RentCollectionSummaryView({
                             scroll={{ x: 640 }}
                             size="small"
                         />
+
+                        <Modal
+                            title="Record Payment"
+                            centered
+                            open={isPaymentModalOpen}
+                            onCancel={() => setIsPaymentModalOpen(false)}
+                            width={{
+                            xs: '90%',
+                            sm: '90%',
+                            md: '60%',
+                            lg: '50%',
+                            xl: '50%',
+                            xxl: '50%',
+                            }}
+                            footer={[null]}
+                        >
+                            <Form
+                                size="large"
+                                layout={'vertical'}
+                                form={paymetTransactionForm}
+                                initialValues={{ 
+                                    paymentBlockId: selectedPaymentBlockId,
+                                    method:"CASH",
+                                    currency:"TZS",
+                                    payerUserId:0
+                                }}
+                                onFinish={handleOnFinishPaymentForm}
+                            >
+                                <Form.Item 
+                                    rules={[{ required: true }]}
+                                    label="Payment Block Id" 
+                                    name="paymentBlockId" 
+                                    hidden>
+                                    <Input />
+                                </Form.Item>
+                                
+                                <Form.Item 
+                                    rules={[{ required: true }]}
+                                    label="User" 
+                                    name="payerUserId" 
+                                    hidden>
+                                    <Input  />
+                                </Form.Item>
+
+                                <Form.Item         
+                                    rules={[{ required: true }]}
+                                    label="Amount" name="amount">
+                                    <Input type={'number'} suffix="TZS" />
+                                </Form.Item>
+
+                                <Form.Item         
+                                    rules={[{ required: true }]}
+                                    label="Currency" name="currency" hidden>
+                                    <Input />
+                                </Form.Item>
+
+                                <Form.Item        
+                                    rules={[{ required: true }]}
+                                    label="Patment Method" name="method" >
+                                    <Radio.Group buttonStyle="solid" >
+                                    <Radio.Button value="CASH">Cash</Radio.Button>
+                                    <Radio.Button value="BANK_TRANSFER">Bank Transfer</Radio.Button>
+                                    <Radio.Button value="MOBILE_MONEY">Mobile Money</Radio.Button>
+                                    </Radio.Group>
+                                </Form.Item>
+
+                                <Form.Item         
+                                    rules={[{ required: true }]}
+                                    label="Reference" name="reference">
+                                    <Input placeholder="input placeholder" />
+                                </Form.Item>
+
+                                <Form.Item label="Note (Optional)" name="note">
+                                    <Input placeholder="Enter payment description" />
+                                </Form.Item>
+
+                                
+                                <Form.Item>
+                                    <Button variant="solid" block type="primary" htmlType="submit" color="green">Submit</Button>
+                                </Form.Item>
+                            </Form>
+                        </Modal>
+
                     </div>
                 </>
             )}
