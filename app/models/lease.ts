@@ -40,6 +40,7 @@ export interface PaymentDTO {
 export interface LeaseDetailsDTO {
   referenceNumber: string;
   id: number;
+  unitId?: number | null;
   startDate: string; // ISO date
   endDate: string; // ISO date
   rent: RentDTO,

@@ -11,6 +11,7 @@ import { getRentSummary, updateLeaseTerms } from "../../services/leaseService";
 import TenantView from "./TenantView";
 import LeaseTermView from "./LeaseTermView";
 import RentCollectionSummaryView from "./RentCollectionSummaryView";
+import LeaseUnitView from "./LeaseUnitView";
 const { Text } = Typography;
 const { Meta } = Card;
 
@@ -70,8 +71,14 @@ export default function LeaseDetails()
         },
         {
             key: '2',
-            label: 'Property',
-            children: 'No propert Linked',
+            label: 'Unit',
+            children: leaseDetails ? (
+                <LeaseUnitView
+                    leaseDetails={leaseDetails}
+                    token={token}
+                    notificationApi={notificationApi}
+                />
+            ) : null,
         },
         {
             key: '3',
