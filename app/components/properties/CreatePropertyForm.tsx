@@ -70,7 +70,7 @@ export default function CreatePropertyForm({
 
         setProperties((currentProperties) => [...currentProperties, createdProperty]);
         setOpen(false);
-        
+          return true;
   };
 
     return (

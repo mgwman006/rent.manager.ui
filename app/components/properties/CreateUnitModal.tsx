@@ -3,6 +3,7 @@ import { useState } from "react";
 import { UnitCreateDTO, UnitDetailsDTO, UnitType } from "../../models/property";
 import { createUnit } from "../../services/propertyService";
 import { useAccount } from "../../store/account/AccountContext";
+import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
 
 interface CreateUnitModalProps {
     open: boolean;
@@ -22,6 +23,7 @@ export default function CreateUnitModal({
     const { accountState } = useAccount();
     const token = accountState.accountDetails?.token ?? "";
     const [submitting, setSubmitting] = useState(false);
+    const { rentalProfileState } = useRentalProfile();
 
     const handleFinish = async (values: UnitCreateDTO) => {
         if (!token) {
@@ -31,7 +33,7 @@ export default function CreateUnitModal({
             });
             return;
         }
-
+        
         setSubmitting(true);
         try {
             const createdUnit = await createUnit(
@@ -69,9 +71,19 @@ export default function CreateUnitModal({
                         numberOfBedrooms: 0,
                         numberOfBathrooms: 0,
                         numberParkingSpots: 0,
+                        rentalProfileId: rentalProfileState.rentalProfile?.id ?? 0,
                     }}
                     onFinish={handleFinish}
                 >
+                    <Form.Item
+                        hidden
+                        name="rentalProfileId"
+                        label="Rental Profile"
+                        rules={[{ required: true, message: "Rental Profile is required" }]}
+                    >
+                        <InputNumber />
+                    </Form.Item>
+
                     <Form.Item
                         name="unitNumber"
                         label="Unit Number"
@@ -99,9 +111,9 @@ export default function CreateUnitModal({
                         <InputNumber min={0} style={{ width: "100%" }} />
                     </Form.Item>
                     <Form.Item
-                        name="size"
-                        label="Size"
-                        rules={[{ required: true, message: "Enter the unit size." }]}
+                        name="roomSize"
+                        label="Room Size"
+                        rules={[{ required: true, message: "Enter the room size." }]}
                     >
                         <InputNumber min={0} style={{ width: "100%" }} />
                     </Form.Item>

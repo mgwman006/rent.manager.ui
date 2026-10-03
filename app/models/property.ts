@@ -51,19 +51,20 @@ export interface UnitDetailsDTO {
   rentAmount: number;
   type: UnitType;
   status: UnitStatus;
-  size: number;
+  roomSize: number;
   sizeUnit: string;
   buildingId: number;
 }
 
 export interface UnitCreateDTO {
+  rentalProfileId: number;
   unitNumber: string;
   numberOfBedrooms: number;
   numberOfBathrooms: number;
   numberParkingSpots: number;
   rentAmount: number;
   type: UnitType;
-  size: number;
+  roomSize: number;
   sizeUnit: string;
 }
 

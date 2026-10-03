@@ -28,8 +28,7 @@ const { useBreakpoint } = Grid;
 const navItems = [
   { key: 'dashborad', label: <Link to="/rental-profile"><Avatar size="small" icon={<DashboardFilled />}/> Dash borad</Link>, to: '/rental-profile' },
   { key: 'leases', label: <Link to="/rental-profile/leases"><Avatar size={'small'} icon={<FileFilled />}/> Leases</Link>, to: '/rental-profile/leases' },
-  { key: 'properties', label: <Link to="#" ><Avatar size="small" icon={<HomeFilled />}/> Properties</Link> , to: '#' },
-  { key: 'tenants', label: <Link to="#" ><Avatar size="small" icon={<UserOutlined />}/> Tenants</Link> , to: '#' },
+  { key: 'properties', label: <Link to="/rental-profile/properties" ><Avatar size="small" icon={<HomeFilled />}/> Properties</Link> , to: '/rental-profile/properties' },
 ];
 
 export default function AppLayout() {

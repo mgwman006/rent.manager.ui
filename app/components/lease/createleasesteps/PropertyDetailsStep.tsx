@@ -17,9 +17,10 @@
 //     );
 // }
 
-import { Alert, Button, Flex, Form, List, notification, Result, Select, Spin, Typography } from "antd";
+import { Alert, Button, Flex, Form, List, notification, Result, Select, Spin, Tag, Typography } from "antd";
 import { useEffect, useState } from "react";
-import { PropertyCreateDTO, PropertyDetailsDTO, UnitDetailsDTO } from "../../../models/property";
+import { PropertyCreateDTO, PropertyDetailsDTO, UnitDetailsDTO, UnitStatus } from "../../../models/property";
+import { LeaseCreateDTO } from "../../../models/lease";
 import { createProperty, getPropertiesByRentalProfileId } from "../../../services/propertyService";
 import { useAccount } from "../../../store/account/AccountContext";
 import { useRentalProfile } from "../../../store/rentalprofile/RentalProfileContext";
@@ -28,7 +29,10 @@ import CreatePropertyForm from "../../properties/CreatePropertyForm";
 import CreateUnitModal from "../../properties/CreateUnitModal";
 
 export default function PropertyDetailsStep() {
-    const leaseForm = Form.useFormInstance();
+    const leaseForm = Form.useFormInstance<LeaseCreateDTO>();
+    const [selectedUnitId, setSelectedUnitId] = useState<number | undefined>(
+        () => leaseForm.getFieldValue("unitId"),
+    );
     const [properties, setProperties] = useState<PropertyDetailsDTO[]>([]);
     const [propertiesLoading, setPropertiesLoading] = useState(false);
     const [createPropertyOpen, setCreatePropertyOpen] = useState(false);
@@ -49,15 +53,18 @@ export default function PropertyDetailsStep() {
     const selectProperty = (propertyId?: number) => {
         setSelectedPropertyId(propertyId);
         setSelectedBuildingId(undefined);
+        setSelectedUnitId(undefined);
         leaseForm.setFieldValue("unitId", undefined);
     };
 
     const selectBuilding = (buildingId?: number) => {
         setSelectedBuildingId(buildingId);
+        setSelectedUnitId(undefined);
         leaseForm.setFieldValue("unitId", undefined);
     };
 
     const selectUnit = (unit: UnitDetailsDTO) => {
+        setSelectedUnitId(unit.id);
         leaseForm.setFieldValue("unitId", unit.id);
     };
 
@@ -70,6 +77,7 @@ export default function PropertyDetailsStep() {
                     : building,
             ),
         })));
+        setSelectedUnitId(unit.id);
         leaseForm.setFieldValue("unitId", unit.id);
     };
 
@@ -169,13 +177,22 @@ export default function PropertyDetailsStep() {
                                     dataSource={units}
                                     rowKey="id"
                                     renderItem={(unit) => {
-                                        const selected = leaseForm.getFieldValue("unitId") === unit.id;
+                                        const selected = selectedUnitId === unit.id;
+                                        const available = unit.status === UnitStatus.AVAILABLE;
+                                        const statusColor = available
+                                            ? "green"
+                                            : unit.status === UnitStatus.OCCUPIED
+                                                ? "red"
+                                                : unit.status === UnitStatus.MAINTENANCE
+                                                    ? "orange"
+                                                    : "default";
                                         return (
                                             <List.Item
                                                 actions={[
                                                     <Button
                                                         key="select"
                                                         type={selected ? "primary" : "default"}
+                                                        disabled={!available}
                                                         onClick={() => selectUnit(unit)}
                                                     >
                                                         {selected ? "Selected" : "Select"}
@@ -184,7 +201,12 @@ export default function PropertyDetailsStep() {
                                             >
                                                 <List.Item.Meta
                                                     title={`Unit ${unit.unitNumber}`}
-                                                    description={`${unit.type} · ${unit.numberOfBedrooms} bed · ${unit.rentAmount} rent`}
+                                                    description={(
+                                                        <Flex align="center" gap="small" wrap="wrap">
+                                                            <span>{unit.type} · {unit.numberOfBedrooms} bed · {unit.rentAmount} rent</span>
+                                                            <Tag color={statusColor}>{unit.status}</Tag>
+                                                        </Flex>
+                                                    )}
                                                 />
                                             </List.Item>
                                         );
