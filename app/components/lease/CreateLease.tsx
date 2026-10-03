@@ -100,13 +100,12 @@ export default function(){
     return (
         <div>
             {contextHolder}
-            <Flex vertical gap={'large'}>
+            <Flex vertical gap={'large'} style={{backgroundColor: "white", padding: "2rem", borderRadius: "0.5rem"}}>
                 <Steps
                     current={createLeaseStep}
                     items={stepItems}
                 />
-
-                <Form
+                     <Form
                     size="large"
                     form={leaseForm}
                     layout="vertical"
@@ -149,6 +148,8 @@ export default function(){
                     
                         
                 </Form>
+                
+               
 
                 <Row justify="space-between">
                         <Col>
@@ -178,8 +179,4 @@ export default function(){
             </Flex>
         </div>
     );
-}
-
-function closeCreateLeaseModal() {
-    throw new Error("Function not implemented.");
 }
