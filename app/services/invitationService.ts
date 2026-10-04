@@ -28,6 +28,33 @@ export const sentInvite = async (requestBody:LeaseInvitationCreateDTO, token:str
     }
 }
 
+export const acceptInvitation = async (
+    invitationToken: string,
+    rentalProfileId: number,
+    token: string,
+    notificationApi: NotificationInstance,
+): Promise<boolean> => {
+    try {
+        await leaseInvitationApi.acceptInvitation(invitationToken, rentalProfileId, token);
+        notificationApi.success({
+            message: "Invitation accepted",
+            description: "Your lease details are now available.",
+        });
+        return true;
+    } catch (error: unknown) {
+        const apiError = error as ApiError;
+        notificationApi.error({
+            message: apiError.message ?? "Failed to accept invitation",
+            description: apiError.details
+                ? typeof apiError.details === "string"
+                    ? apiError.details
+                    : JSON.stringify(apiError.details)
+                : "The invitation could not be accepted.",
+        });
+        return false;
+    }
+};
+
  export const getActiveInvitations = async (phoneNumber:string, jwtToken:string,notificationApi:NotificationInstance): Promise<LeaseInvitationDetailsDTO[]> => {
     if (!phoneNumber || !jwtToken) {
         notificationApi.error({

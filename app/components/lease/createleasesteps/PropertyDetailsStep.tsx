@@ -66,6 +66,7 @@ export default function PropertyDetailsStep() {
     const selectUnit = (unit: UnitDetailsDTO) => {
         setSelectedUnitId(unit.id);
         leaseForm.setFieldValue("unitId", unit.id);
+        leaseForm.setFieldValue(["rent", "amount"], unit.rentAmount);
     };
 
     const handleUnitCreated = (unit: UnitDetailsDTO) => {
@@ -79,6 +80,7 @@ export default function PropertyDetailsStep() {
         })));
         setSelectedUnitId(unit.id);
         leaseForm.setFieldValue("unitId", unit.id);
+        leaseForm.setFieldValue(["rent", "amount"], unit.rentAmount);
     };
 
     useEffect(() => {

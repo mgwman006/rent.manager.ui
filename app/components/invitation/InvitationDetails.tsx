@@ -6,6 +6,7 @@ import { AccountState, LeaseInvitationDetailsDTO } from "../../models/user";
 import { useAccount } from "../../store/account/AccountContext";
 import { LeaseDetailsDTO } from "../../models/lease";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
+import { acceptInvitation } from "../../services/invitationService";
 
 const { Title, Text } = Typography;
 
@@ -154,17 +155,15 @@ function isTokenExpired(token?: string): boolean
 
     setAccepting(true);
     try {
-      await leaseInvitationApi.acceptInvitation(invitationToken, rentalProfileId, jwtToken);
-      notificationApi.success({
-        message: "Invitation accepted",
-        description: "Your lease details are now available.",
-      });
-      navigate(`/`);
-    } catch (error: any) {
-      notificationApi.error({
-        message: error?.message ?? "Failed to accept invitation",
-        description: error?.data ?? "The invitation could not be accepted.",
-      });
+      const accepted = await acceptInvitation(
+        invitationToken,
+        rentalProfileId,
+        jwtToken,
+        notificationApi,
+      );
+      if (accepted) {
+        navigate("/");
+      }
     } finally {
       setAccepting(false);
     }

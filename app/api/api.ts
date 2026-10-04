@@ -207,7 +207,7 @@ export const leaseInvitationApi = {
 
   create: async (requestBody:LeaseInvitationCreateDTO, token:string) => {
     const res = await apiClient.post<ApiResponse<LeaseInvitationDetailsDTO>>(
-      `/tenant-invitations`,
+      `/lease-invitations`,
       requestBody,
       {
         headers: {
