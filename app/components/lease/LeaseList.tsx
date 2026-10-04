@@ -38,12 +38,11 @@ export default function LeaseList(){
             ),
         },
         {
-            disabled:true,
-            key: '4',
-            label: 'Expired',
+            key: '3',
+            label: 'Ended',
             children: LeasesByStatus(
                 rentalProfileState?.rentalProfile?.id ?? 0,
-                LeaseStatus.EXPIRED,
+                LeaseStatus.ENDED,
                 token,
             ),
         }
