@@ -32,6 +32,48 @@ export interface Tenant
     email : string;
 }
 
+export interface LeaseInvitationDetailsDTO
+{
+  leaseId: number;
+  id: number;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  invitationToken: string;
+  status: TenantInvitationStatus;
+  expiresAt: string;
+  acceptedAt: string;
+  sentAt: string;
+}
+
+export interface LeaseInvitationCreateDTO
+{
+  leaseId: number;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+}
+
+export interface TenantDetailsDTO {
+  id: number;
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+}
+
+export enum TenantInvitationStatus
+{
+  PENDING = "PENDING",
+  ACCEPTED = "ACCEPTED",
+  EXPIRED = "EXPIRED",
+  REJECTED = "REJECTED",
+  CANCELED = "CANCELED"
+}
+
 export interface TenantResponseDto
 {
     id: number;

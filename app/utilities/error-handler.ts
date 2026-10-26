@@ -1,5 +1,6 @@
 import { NotificationInstance } from "antd/es/notification/interface";
 import { ApiError } from "../models/error";
+import { navigateToAuth } from "./auth";
 
 
 export function handleApiError(error: unknown, notificationApi:NotificationInstance) 
@@ -10,6 +11,11 @@ export function handleApiError(error: unknown, notificationApi:NotificationInsta
         message:"Error",
         description:"Something went wrong"
     });
+    return;
+  }
+
+  if (error.statusCode === 401) {
+    navigateToAuth();
     return;
   }
 
