@@ -7,11 +7,11 @@ import { useAccount } from "../../store/account/AccountContext";
 import { LeaseDetailsDTO } from "../../models/lease";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
 import { acceptInvitation } from "../../services/invitationService";
+import { isTokenExpired } from "../../utilities/auth";
 
 const { Title, Text } = Typography;
 
 const authUrl = import.meta.env.VITE_AUTH_URL?.trim();
-const tenantManagerUrl = import.meta.env.VITE_TENANT_MANAGER_URL?.trim();
 
 export default function InvitationDetails() {
   const { invitationToken } = useParams();
@@ -25,30 +25,6 @@ export default function InvitationDetails() {
   const jwtToken = accountState.accountDetails?.token;
   const {rentalProfileState} = useRentalProfile();
   
-function isTokenExpired(token?: string): boolean 
-    {
-        if (!token) 
-        {
-            return true;
-        }
-
-        try {
-            const parts = token.split(".");
-            if (parts.length < 2) {return true;}
-
-            const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
-            const exp = payload?.exp;
-
-            if (typeof exp !== "number") {
-                return true;
-            }
-
-            return Date.now() >= exp * 1000;
-        } catch (error) {
-            return true;
-        }
-    }
-
   const navigateToAuthFromInvitation = (nextApp: string = "tenant-manager", phone?: string) => {
         if (!authUrl) {
             notificationApi.error({

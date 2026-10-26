@@ -83,7 +83,7 @@ export default function LeaseTermView({
         <Row>
             <Col span={24}>
                 <Card 
-                    title={<Button color="primary" variant="solid" disabled={leaseDetails.status==LeaseStatus.ACTIVE} onClick={openEditModal}><EditOutlined /> Edit Terms</Button>}
+                    title={<Button color="primary" variant="solid" disabled={leaseDetails.status === LeaseStatus.ACTIVE || leaseDetails.status === LeaseStatus.ENDED} onClick={openEditModal}><EditOutlined /> Edit Terms</Button>}
                     variant="borderless"
                     style={{ marginBottom: 16 }}
                 >
@@ -161,7 +161,7 @@ export default function LeaseTermView({
                         </Form.Item>
 
                         <Form.Item>
-                            <Button htmlType="submit"  type="primary" variant="solid" color="green" block>Submit</Button>
+                            <Button htmlType="submit" type="primary" variant="solid" color="green" block disabled={leaseDetails.status === LeaseStatus.ENDED}>Submit</Button>
                         </Form.Item>
                     </Form>
                 </Modal>

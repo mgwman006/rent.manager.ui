@@ -180,7 +180,7 @@ export default function PropertyDetailsStep() {
                                     rowKey="id"
                                     renderItem={(unit) => {
                                         const selected = selectedUnitId === unit.id;
-                                        const available = unit.status === UnitStatus.AVAILABLE;
+                                        const available = unit.status === UnitStatus.AVAILABLE || unit.status === null;
                                         const statusColor = available
                                             ? "green"
                                             : unit.status === UnitStatus.OCCUPIED

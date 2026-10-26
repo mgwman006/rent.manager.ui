@@ -97,6 +97,7 @@ export default function LeaseDetails()
             label: 'Payment',
             children: <RentCollectionSummaryView 
                 leaseId={leaseDetails?.id}
+                leaseStatus={leaseDetails?.status ?? LeaseStatus.PENDING}
                 token={token}
                 notificationApi={notificationApi}
              />,

@@ -77,6 +77,7 @@ export interface LeaseTermsUpdateDTO {
 }
 
 export interface RentSummaryDTO{
+  leaseId: number;
   totalExpectedAmount: number;
   totalPaidAmount: number;
   totalOutstandingAmount: number;

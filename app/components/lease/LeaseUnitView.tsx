@@ -117,8 +117,9 @@ export default function LeaseUnitView({
                     <Descriptions.Item label="Bathrooms">{relatedUnit.numberOfBathrooms}</Descriptions.Item>
                     <Descriptions.Item label="Rent">{relatedUnit.rentAmount}</Descriptions.Item>
                     <Descriptions.Item label="Status">
-                        <Tag color={relatedUnit.status === "AVAILABLE" ? "green" : relatedUnit.status === "OCCUPIED" ? "red" : "orange"}>
-                            {relatedUnit.status}
+                        <Tag color={relatedUnit.status === "AVAILABLE" ? "green" : 
+                                relatedUnit.status === "OCCUPIED" ? "red" : "orange"}>
+                            {relatedUnit.status ?? "Unknown"}
                         </Tag>
                     </Descriptions.Item>
                 </Descriptions>

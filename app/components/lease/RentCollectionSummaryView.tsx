@@ -1,6 +1,6 @@
 import { Avatar, Alert, Card, Col, Row, Table, TableProps, Tag, Typography, Button, Modal, Form, Radio, Input } from "antd";
 import { CreditCardFilled, CreditCardOutlined, ScheduleOutlined, WalletOutlined } from "@ant-design/icons";
-import { PaymentBlockStatus, PaymentBlockSummaryDTO, RentSummaryDTO } from "../../models/lease";
+import { LeaseStatus, PaymentBlockStatus, PaymentBlockSummaryDTO, RentSummaryDTO } from "../../models/lease";
 import { NotificationInstance } from "antd/es/notification/interface";
 import { useEffect, useState } from "react";
 import { getRentSummary } from "../../services/leaseService";
@@ -15,6 +15,7 @@ const { Meta } = Card;
 
 interface RentCollectionSummaryViewProps {
     leaseId: number | null | undefined;
+    leaseStatus: LeaseStatus;
     token:string;
     notificationApi: NotificationInstance;
 
@@ -22,6 +23,7 @@ interface RentCollectionSummaryViewProps {
 
 export default function RentCollectionSummaryView({
     leaseId,
+    leaseStatus,
     token,
     notificationApi
 }: RentCollectionSummaryViewProps) {
@@ -30,6 +32,7 @@ export default function RentCollectionSummaryView({
     const [paymetTransactionForm] = Form.useForm<PaymentTransactionCreateDTO>();
     const [selectedPaymentBlockId,setSelectedPaymentBlockId] = useState<number>(0);
     const { rentalProfileState } = useRentalProfile();
+
     
 
 
@@ -70,7 +73,7 @@ export default function RentCollectionSummaryView({
         setSelectedPaymentBlockId(paymentBlockId);
     }
 
-    const handleOnFinishPaymentForm = (values:PaymentTransactionCreateDTO) => {
+    const handleOnFinishPaymentForm = async (values:PaymentTransactionCreateDTO) => {
         const rentalProfileId = rentalProfileState.rentalProfile?.id;
 
         if(!rentalProfileId){
@@ -80,7 +83,15 @@ export default function RentCollectionSummaryView({
             });
             return;
         }
-        recordPayment(values,rentalProfileId,token,notificationApi);
+        const result = await recordPayment(values,rentalProfileId,token,notificationApi);
+        if (result !== null) {
+            notificationApi.success({
+                message: "Payment Recorded",
+                description: "The payment has been successfully recorded.",
+            });
+            setIsPaymentModalOpen(false);
+            window.location.reload();
+        }
     }
     const columns: TableProps<PaymentBlockSummaryDTO>["columns"] = [
     {
@@ -127,7 +138,7 @@ export default function RentCollectionSummaryView({
     {
         title: "Action",
         render: (_, record) => (
-            <Button onClick={() => openPaymentTransactionModal(record.id)} color="primary" variant="solid" disabled={record.status === PaymentBlockStatus.PAID}> <CreditCardOutlined/> Record Payment</Button>
+            <Button onClick={() => openPaymentTransactionModal(record.id)} color="primary" variant="solid" disabled={leaseStatus === LeaseStatus.ENDED || record.status === PaymentBlockStatus.PAID || leaseStatus === LeaseStatus.PENDING_TENANT_APPROVAL || leaseStatus === LeaseStatus.TERMINATED}> <CreditCardOutlined/> Record Payment</Button>
         ),
     },
 ];
@@ -267,7 +278,9 @@ export default function RentCollectionSummaryView({
 
                                 
                                 <Form.Item>
-                                    <Button variant="solid" block type="primary" htmlType="submit" color="green">Submit</Button>
+                                    <Button variant="solid" block type="primary" htmlType="submit" color="green" disabled={leaseStatus === LeaseStatus.ENDED || leaseStatus === LeaseStatus.PENDING_TENANT_APPROVAL || leaseStatus === LeaseStatus.TERMINATED}>
+                                        Submit
+                                    </Button>
                                 </Form.Item>
                             </Form>
                         </Modal>

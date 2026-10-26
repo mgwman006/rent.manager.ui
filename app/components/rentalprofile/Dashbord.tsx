@@ -20,7 +20,7 @@ import { LeaseInvitationDetailsDTO } from "../../models/user";
 import { getLeasesAllLeases, getMonthlyCollectionSummary } from "../../services/leaseService";
 import { MonthlyCollectionSummaryDTO } from "../../models/lease";
 import dayjs from "dayjs";
-import { isTokenExpired } from "../HomePage";
+import { isTokenExpired } from "../../utilities/auth";
 
 const { Meta } = Card;
 const { Title, Text } = Typography;
