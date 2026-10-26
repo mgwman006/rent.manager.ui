@@ -1,6 +1,6 @@
 import { Button, Col, Form, Input, notification, Row, Select } from "antd";
 import { useAccount } from "../../store/account/AccountContext";
-import { CreateRentalProfileDTO, MobileMoneyProvider, PaymentMethod, RentalProfileType } from "../../models/rentalprofile";
+import { CreateRentalProfileDTO, RentalProfileType } from "../../models/rentalprofile";
 import { rentalProfileApi } from "../../api/api";
 import { handleApiError } from "../../utilities/error-handler";
 
