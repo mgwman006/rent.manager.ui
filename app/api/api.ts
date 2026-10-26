@@ -1,9 +1,11 @@
 import axios from 'axios';
 import { ApiResponse } from '../models/common';
 import { ApiError } from '../models/error';
-import { MembershipDetailsDTO } from '../models/user';
+import { MembershipDetailsDTO, LeaseInvitationCreateDTO, LeaseInvitationDetailsDTO } from '../models/user';
 import { CreateRentalProfileDTO, RentalProfileDetailsDTO } from '../models/rentalprofile';
-import { LeaseDTO, CreateLeaseDTO } from '../models/lease';
+import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, MonthlyCollectionSummaryDTO, RentSummaryDTO } from '../models/lease';
+import { PaymentTransactionCreateDTO } from '../models/payments';
+import { recordPayment } from '../services/paymentService';
 
 const apiUrl = import.meta.env.VITE_RENT_MANAGER_API_URL;
 
@@ -108,7 +110,7 @@ export const rentalProfileApi = {
 
 export const leaseApi = {
   getLeasesByRentalProfile: async (rentalProfileId: number, token: string) => {
-    const res = await apiClient.get<ApiResponse<LeaseDTO[]>>(
+    const res = await apiClient.get<ApiResponse<LeaseDetailsDTO[]>>(
       `/leases/rental-profile/${rentalProfileId}`,
       {
         headers: {
@@ -120,9 +122,155 @@ export const leaseApi = {
     return handleResponse(res.data);
   },
 
-  createLease: async (requestBody: CreateLeaseDTO, token: string) => {
-    const res = await apiClient.post<ApiResponse<LeaseDTO>>(
-      `/leases`,
+  getLeasesByRentalProfileAndStatus: async (rentalProfileId: number,status:LeaseStatus, token: string) => {
+    const res = await apiClient.get<ApiResponse<LeaseDetailsDTO[]>>(
+      `/leases/rental-profile/${rentalProfileId}?status=${status}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  getLeaseById: async (id : number, token: string) => {
+    const res = await apiClient.get<ApiResponse<LeaseDetailsDTO>>(
+      `/leases/${id}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  createLease: async (requestBody: LeaseCreateDTO, token: string) => {
+    const res = await apiClient.post<ApiResponse<LeaseDetailsDTO>>(
+      `/leases/landlord`,
+      requestBody,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  updateLease: async (id: number, requestBody: LeaseTermsUpdateDTO, token: string) => {
+    const res = await apiClient.patch<ApiResponse<LeaseDetailsDTO>>(
+      `/leases/${id}/terms`,
+      requestBody,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  getRentCollectionSummary: async (leaseId: number, token: string) => {
+    const res = await apiClient.get<ApiResponse<RentSummaryDTO>>(
+      `/leases/rent/summary/${leaseId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  getMonthlyCollectionSummary: async (rentalProfileId: number, month:number, year: number, token: string) => {
+    const res = await apiClient.get<ApiResponse<MonthlyCollectionSummaryDTO>>(
+      `/leases/rental-profile/${rentalProfileId}/monthly-rent-summary?month=${month}&year=${year}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+};
+
+export const leaseInvitationApi = {
+
+  create: async (requestBody:LeaseInvitationCreateDTO, token:string) => {
+    const res = await apiClient.post<ApiResponse<LeaseInvitationDetailsDTO>>(
+      `/lease-invitations`,
+      requestBody,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+    getActiveInvitationsByPhoneNumber: async (phoneNumber :string, jwtToken: string) => {
+        const results = await apiClient.get<ApiResponse<LeaseInvitationDetailsDTO[]>>(`/lease-invitations/phone/${phoneNumber}`,
+            {
+                headers: {
+                'Authorization': `Bearer ${jwtToken}`
+                }
+            }
+        );
+        return handleResponse(results.data);
+    },
+
+  getByInvitationToken: async (invitationToken:string,jwtToken: string) => {
+    const res = await apiClient.get<ApiResponse<LeaseInvitationDetailsDTO>>(`/lease-invitations/${invitationToken}`,
+        {
+            headers: {
+            'Authorization': `Bearer ${jwtToken}`
+            }
+        }
+    );
+    return handleResponse(res.data);
+  },
+
+  acceptInvitation: async (invitationToken:string, id:number, jwtToken: string) => {
+    const res = await apiClient.post<ApiResponse<LeaseInvitationDetailsDTO>>(
+      `/lease-invitations/${invitationToken}/landlord/accept?landlordId=${id}`,
+      null,
+      {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      }
+    );
+    return handleResponse(res.data);
+  },
+
+  getLeaseDetailsByInvitationToken: async (invitationToken:string, jwtToken:string) => {
+    const res = await apiClient.get<ApiResponse<LeaseDetailsDTO>>(`/lease-invitations/${invitationToken}/lease`,
+        {
+            headers: {
+                'Authorization': `Bearer ${jwtToken}`
+            }
+        }
+    );
+
+    return handleResponse(res.data);
+  }
+};
+
+export const paymentApi = {
+
+  recordPayment: async (rentalprofileId:number,requestBody: PaymentTransactionCreateDTO, token: string) => {
+    const res = await apiClient.post<ApiResponse<String>>(
+      `/payment-blocks/rental-profile/${rentalprofileId}/record-payment`,
       requestBody,
       {
         headers: {
@@ -133,9 +281,8 @@ export const leaseApi = {
 
     return handleResponse(res.data);
   }
+ 
 };
-
-
 
 export function handleResponse<T>(response: ApiResponse<T>): T {
   if (!response.success) {

@@ -1,21 +1,34 @@
+import { LeaseInvitationDetailsDTO, TenantDetailsDTO } from "./user";
+
 // Mapped from backend Lease entity
-export type RentPeriod = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY" | string;
-
-export type LeaseStatus =
-  | "ACTIVE"
-  | "PENDING"
-  | "COMPLETED"
-  | "CANCELLED"
-  | "DRAFT"
-  | string;
-
-export interface TenantDTO {
-  id: number;
-  name?: string;
-  phone?: string;
-  email?: string;
+export enum PaymentPeriod
+{
+  DAILY = "DAILY",
+  WEEKLY = "WEEKLY",
+  MONTHLY = "MONTHLY",
+  SIX_MONTHS = "SIX_MONTHS",
+  YEARLY = "YEARLY"
 }
 
+export enum RentFrequency
+{
+  DAILY = "DAILY",
+  WEEKLY = "WEEKLY",
+  MONTHLY = "MONTHLY",
+  YEARLY = "YEARLY"
+}
+
+export enum LeaseStatus {
+  ACTIVE = "ACTIVE",
+  ENDED = "ENDED",
+  TERMINATED = "TERMINATED",
+  PENDING = "PENDING",
+  PENDING_LANDLORD_APPROVAL = "PENDING_LANDLORD_APPROVAL",
+  PENDING_TENANT_APPROVAL = "PENDING_TENANT_APPROVAL"
+}
+
+
+ 
 export interface PaymentDTO {
   id: number;
   amount: number;
@@ -23,37 +36,83 @@ export interface PaymentDTO {
   method?: string;
 }
 
-export interface LeaseDTO {
+export interface LeaseDetailsDTO {
   referenceNumber: string;
-  tenantName: string | undefined;
-  amountDue: number;
   id: number;
+  unitId?: number | null;
   startDate: string; // ISO date
   endDate: string; // ISO date
-  rentAmount: number;
-  rentPeriod?: RentPeriod;
-  requiredDeposit: number;
-  paidDeposit?: number;
-  currency: string;
+  rent: RentDTO,
+  fullLeasePaymentRequired:boolean;
   status: LeaseStatus;
-  unitId?: number;
-  tenantId?: number;
-  tenant?: TenantDTO;
-  payments?: PaymentDTO[];
-  rentalProfileId?: number;
+  tenant: TenantDetailsDTO;
+  invitations: LeaseInvitationDetailsDTO[];
 }
 
-export interface CreateLeaseDTO {
+export interface RentDTO{
+    id :number,
+    amount : number,
+    currency : string,
+    frequency: string
+}
+
+export interface LeaseCreateDTO {
   rentalProfileId: number;
-  unitId: number;
+  unitId?: number;
   tenantId?: number;
   tenantFirstName?: string;
   tenantLastName?: string;
   tenantPhoneNumber?: string;
   startDate?: string;
   endDate?: string;
-  rentAmount: number;
-  currency: string;
-  rentPeriod?: RentPeriod;
+  rent: RentDTO;
+  fullLeasePaymentRequired: boolean;
+}
+
+export interface LeaseTermsUpdateDTO {
+  startDate?: string;
+  endDate?: string;
+  rent: RentDTO;
+  fullLeasePaymentRequired: boolean;
+}
+
+export interface RentSummaryDTO{
+  leaseId: number;
+  totalExpectedAmount: number;
+  totalPaidAmount: number;
+  totalOutstandingAmount: number;
+  status: RentPaymentStatus,
+  paymentBlocks: PaymentBlockSummaryDTO[],
+}
+
+export interface PaymentBlockSummaryDTO{
+  id:number;
+  amount: number;
+  paidAmount: number;
+  outstandingAmount: number;
+  startDate:string;
+  endDate:string;
+  dueDate: string;
+  status: PaymentBlockStatus
+}
+
+export enum RentPaymentStatus
+{
+  PAID = "PAID",
+  PARTIALLY_PAID = "PARTIALLY_PAID",
+  UNPAID = "UNPAID",
+}
+
+export enum PaymentBlockStatus
+{
+  PAID = "PAID",
+  UNPAID = "UNPAID",
+}
+
+export interface MonthlyCollectionSummaryDTO {
+  totalExpectedAmount: number;
+  totalAmountPaid: number;
+  totalOutstandingAmount: number;
+  progressPercentage:number
 }
 

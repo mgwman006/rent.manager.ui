@@ -14,6 +14,18 @@ export interface RentalProfileDetailsDTO
   rentalUnits: RentalUnitDetailsDTO[];
 }
 
+export type RentalProfileState = {
+  rentalProfile: RentalProfileDetailsDTO | null;
+  loading: boolean;
+  error: string | null;
+};
+
+export type RentalProfileAction =
+  | { type: "SET_RENTAL_PROFILE"; payload: RentalProfileDetailsDTO | null }
+  | { type: "CLEAR_RENTAL_PROFILE" }
+  | { type: "FETCH_START" }
+  | { type: "FETCH_ERROR"; payload: string };
+
 export interface RentalUnitDetailsDTO
 {
   id: number;
@@ -41,27 +53,3 @@ export interface RentalUnitDetailsDTO
   }
 
 
-export interface CreateRentReceivingAccountDTO
-{
-  paymentMethod:PaymentMethod;
-  accountNumber?:string;
-  bankName?:string;
-  mobileMoneyProvider?:MobileMoneyProvider;
-  mobileMoneyNumber?:string;
-  isDefault:boolean;
-}
-
-export enum PaymentMethod
-{
-  CASH,
-  BANK_TRANSFER,
-  MOBILE_MONEY
-}
-
-export enum MobileMoneyProvider
-{
-  MIX_BY_YAS,
-  MPESA,
-  AIRTEL_MONEY,
-  HALOPESA
-}

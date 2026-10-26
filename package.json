@@ -12,7 +12,7 @@
     "@react-router/node": "^7.5.3",
     "@react-router/serve": "^7.5.3",
     "@toolpad/core": "^0.15.0",
-    "antd": "^5.25.3",
+    "antd": "^6.6.0",
     "axios": "^1.9.0",
     "isbot": "^5.1.27",
     "react": "^19.1.0",
