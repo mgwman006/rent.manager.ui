@@ -61,6 +61,7 @@ export default function HomePage()
     let userId: number;
     let organizationId: number;
     let token: string;
+    let accountDetails = accountState.accountDetails;
 
     if (accountStateString) {
       const receivedAccountState: AccountState = JSON.parse(accountStateString);
@@ -68,10 +69,10 @@ export default function HomePage()
       
       if (newDetails && newDetails.userDetails) {
         dispatchAccountState({ type: "FETCH_SUCCESS", payload: newDetails });
+        accountDetails = newDetails;
       }
     }
 
-    const accountDetails = accountState.accountDetails;
     userId = accountDetails?.userDetails?.id ?? 0;
     organizationId = accountDetails?.userDetails?.memberships[0]?.organizationId ?? 0;
     token = accountDetails?.token ?? "";
