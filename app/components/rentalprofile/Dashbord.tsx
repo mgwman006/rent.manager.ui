@@ -8,12 +8,14 @@ import {
   RightOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
-import { Avatar, Badge, Card, Col, DatePicker, Flex, Input, Modal, notification, Progress, Row, Tag, Typography } from "antd";
+import { Alert, Avatar, Badge, Button, Card, Col, DatePicker, Flex, Form, Input, Modal, notification, Progress, Row, Select, Tag, Typography } from "antd";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
-import { RentalProfileDetailsDTO } from "../../models/rentalprofile";
+import { RentalProfileDetailsDTO, RentalProfileType } from "../../models/rentalprofile";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAccount } from "../../store/account/AccountContext";
+import { rentalProfileApi } from "../../api/api";
+import { handleApiError } from "../../utilities/error-handler";
 import Invitations from "../invitation/Invitations";
 import { getActiveInvitations } from "../../services/invitationService";
 import { LeaseInvitationDetailsDTO } from "../../models/user";
@@ -31,11 +33,17 @@ const rentManagerUrl = import.meta.env.VITE_RENT_MANAGER_URL?.trim();
 export default function Dashboard() {
   const navigate = useNavigate();
   const { accountState, dispatchAccountState } = useAccount();
-  const { rentalProfileState } = useRentalProfile();
+  const { rentalProfileState, dispatchRentalProfileState } = useRentalProfile();
   const [notificationApi, contextHolder] = notification.useNotification();
+  const [upgradeForm] = Form.useForm<{ organizationId: number }>();
   const [rentalProfile, setRentalProfile] = useState<RentalProfileDetailsDTO | null>(null);
+  const selectedProfileType = rentalProfileState.rentalProfile?.type?.trim().toUpperCase();
+  const organizationMemberships = (accountState.accountDetails?.userDetails?.memberships ?? [])
+    .filter((membership) => Number.isSafeInteger(membership.organizationId) && membership.organizationId > 0);
   const [leaseCount, setLeaseCount] = useState(0);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
   const [invitesCount,setInvitesCount] = useState<number>(0);
   const [invitations, setInvitations] = useState<LeaseInvitationDetailsDTO[]>([]);
   const [monthlyCollectionSummary, setMonthlyCollectionSummary] = useState<MonthlyCollectionSummaryDTO>();
@@ -55,8 +63,50 @@ const navigateToAuth = (nextApp: string = "rent-manager", phone?: string) => {
       return;
     }
 
-    const url = `${authUrl}?outGoingUrl=${encodeURIComponent(outGoingUrlValue)}&phoneNumber=${encodeURIComponent("")}`;
+    const url = `${authUrl}?outGoingUrl=${encodeURIComponent(outGoingUrlValue)}&phoneNumber=${encodeURIComponent(phone ?? "")}`;
     window.location.href = url;
+  };
+
+  const handleUpgrade = async ({ organizationId }: { organizationId: number }) => {
+    const profile = rentalProfileState.rentalProfile;
+    const token = accountState.accountDetails?.token;
+    const validMembership = organizationMemberships.some(
+      (membership) => membership.organizationId === organizationId,
+    );
+
+    if (!profile || !token || !Number.isSafeInteger(organizationId) || organizationId <= 0 || !validMembership) {
+      notificationApi.error({
+        message: "Valid organization required",
+        description: "Select an organization that belongs to your account before upgrading.",
+      });
+      return;
+    }
+
+    setIsUpgrading(true);
+    try {
+      const upgradedProfile = await rentalProfileApi.upgradeRentalProfile(
+        profile.id,
+        organizationId,
+        token,
+      );
+      const updatedProfile = {
+        ...profile,
+        ...upgradedProfile,
+        type: RentalProfileType.Business,
+        organizationId,
+      };
+      setRentalProfile(updatedProfile);
+      dispatchRentalProfileState({ type: "SET_RENTAL_PROFILE", payload: updatedProfile });
+      setIsUpgradeModalOpen(false);
+      notificationApi.success({
+        message: "Rental profile upgraded",
+        description: "Your rental profile is now a Business profile.",
+      });
+    } catch (error: unknown) {
+      handleApiError(error, notificationApi);
+    } finally {
+      setIsUpgrading(false);
+    }
   };
 
   const loadLeasesCount = async (rentalProfileId: number, jwtToken: string) => {
@@ -168,7 +218,16 @@ const summaryCards = [
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col span={24}>
-          <Card style={{ borderRadius: 16 }}>
+          <Card
+            style={{ borderRadius: 16 }}
+            extra={
+              selectedProfileType === RentalProfileType.Individual ? (
+                <Button variant="filled" color="orange" onClick={() => setIsUpgradeModalOpen(true)}>
+                  Upgrade
+                </Button>
+              ) : null
+            }
+          >
             <Meta
               avatar={<Avatar size={52} icon={<HomeTwoTone style={{ fontSize: 26 }} />} />}
               title={rentalProfile?.name ?? "No Rental Profile"}
@@ -218,6 +277,55 @@ const summaryCards = [
                 }}
       >
           <Invitations phoneNumber={rentalProfile?.phoneNumber ?? ""} jwtToken={accountState.accountDetails?.token} />
+      </Modal>
+
+      <Modal
+        title="Upgrade to Business"
+        open={isUpgradeModalOpen}
+        onCancel={() => setIsUpgradeModalOpen(false)}
+        footer={null}
+        destroyOnHidden
+      >
+        {organizationMemberships.length === 0 ? (
+          <div>
+            <Alert
+              type="info"
+              showIcon
+              message="Create an organization first"
+              description="A valid organization is required to upgrade this rental profile to Business."
+            />
+            <Button
+              type="primary"
+              style={{ marginTop: 16 }}
+              onClick={() => navigateToAuth("rent-manager", accountState.accountDetails?.phoneNumber)}
+            >
+              Create organization
+            </Button>
+          </div>
+        ) : (
+          <Form
+            form={upgradeForm}
+            layout="vertical"
+            onFinish={handleUpgrade}
+          >
+            <Form.Item
+              name="organizationId"
+              label="Organization"
+              rules={[{ required: true, message: "Select an organization" }]}
+            >
+              <Select
+                placeholder="Select an organization"
+                options={organizationMemberships.map((membership) => ({
+                  value: membership.organizationId,
+                  label: membership.organizationName,
+                }))}
+              />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" loading={isUpgrading}>
+              Upgrade profile
+            </Button>
+          </Form>
+        )}
       </Modal>
 
       <Row gutter={[16, 16]}>

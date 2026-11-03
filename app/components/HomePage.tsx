@@ -1,6 +1,6 @@
 
-import {Card,Col,Row,Typography,notification} from "antd";
-import {ArrowRightOutlined} from "@ant-design/icons";
+import {Button, Card, Col, Empty, Modal, Row, Spin, Typography, notification} from "antd";
+import {ArrowRightOutlined, PlusOutlined} from "@ant-design/icons";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { AccountState } from "../models/user";
 import { useAccount } from "../store/account/AccountContext";
@@ -29,6 +29,8 @@ export default function HomePage()
   const [notificationApi, contextHolder] = notification.useNotification();
   const { accountState, dispatchAccountState } = useAccount();
   const [rentalProfiles, setRentalProfiles] = useState<RentalProfileDetailsDTO[]>([]);
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
+  const [createProfileModalOpen, setCreateProfileModalOpen] = useState(false);
   const navigate = useNavigate();
   const { dispatchRentalProfileState } = useRentalProfile();
   
@@ -37,16 +39,22 @@ export default function HomePage()
   const getRentalProfiles = async (userId: number, organizationId: number, token?: string) => {
     if (!token) {
       console.warn("No token available for membership request, skipping call.");
+      setLoadingProfiles(false);
       return;
     }
 
-    const profiles = await getRentalProfilesByUserOrOrganization(
-      userId,
-      organizationId,
-      token,
-      notificationApi,
-    );
-    setRentalProfiles(profiles);
+    setLoadingProfiles(true);
+    try {
+      const profiles = await getRentalProfilesByUserOrOrganization(
+        userId,
+        organizationId,
+        token,
+        notificationApi,
+      );
+      setRentalProfiles(profiles);
+    } finally {
+      setLoadingProfiles(false);
+    }
   };
 
   const navigateToRentalProfile = (profile: RentalProfileDetailsDTO) => {
@@ -106,12 +114,19 @@ export default function HomePage()
   return (
     <div style={{ minHeight: "100vh", background: "#fff", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {contextHolder}
+      <Col
+        span={24}
+      >
 
-      {
-        rentalProfiles.length > 0 ? (
-          <Card style={{ margin: "20px" }}>
-            <Title level={4}>Select Rental Profile</Title>
-            {rentalProfiles.map((profile) => (
+        <Card
+          title={<Title level={3} style={{ color: NAVY, marginBottom: 0 }}>Your Rental Profiles</Title>}
+          extra={<Button type="primary" onClick={() => setCreateProfileModalOpen(true)}>C
+          reate Profile <PlusOutlined /></Button>}
+        >
+          {loadingProfiles ? (
+            <Spin />
+          ) : rentalProfiles.length > 0 ? (
+            rentalProfiles.map((profile) => (
               <Card
                 key={profile.id}
                 style={{ marginBottom: "10px", cursor: "pointer" }}
@@ -124,13 +139,23 @@ export default function HomePage()
                   </Col>
                 </Row>
               </Card>
-            ))}
-          </Card>
-        )   
-       : (
-        <CreateRentalProfile/>
-      )
-     }
+            ))
+          ) : (
+            <Empty description="No rental profiles yet." />
+          )}
+        </Card>
+
+        <Modal
+          open={createProfileModalOpen}
+          onCancel={() => setCreateProfileModalOpen(false)}
+          footer={null}
+          destroyOnHidden
+          width={600}
+        >
+          <CreateRentalProfile />
+        </Modal>
+
+      </Col>
     </div>
 
   );
