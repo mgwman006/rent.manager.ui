@@ -52,7 +52,7 @@ export default function CreateRentalProfile() {
   return (
     <Row align="middle" justify="center" style={{ minHeight: "100vh" }}>
         {contextHolder}
-        <Col sm={24} md={24} lg={6} xl={6}>
+        <Col sm={24} md={24} lg={24} xl={24} xxl={24}>
            <h2 style={{ textAlign: "center" }}>Create Rental Profile</h2>
            <p style={{ textAlign: "center" }}>Please fill in the details below to create your rental profile. This will allow you to manage your rental units and collect rent efficiently.</p>
            <Form

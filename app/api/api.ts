@@ -94,6 +94,20 @@ export const rentalProfileApi = {
     return handleResponse(res.data);
   },
 
+  upgradeRentalProfile: async (rentalProfileId: number, organizationId: number, token: string) => {
+    const res = await apiClient.patch<ApiResponse<RentalProfileDetailsDTO>>(
+      `/rentalprofiles/${rentalProfileId}/upgrade/${organizationId}`,
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
   getByUserIdOrOrganizationId: async (userId: number, organizationId: number, token: string) => {
     const res = await apiClient.get<ApiResponse<RentalProfileDetailsDTO[]>>(
       `/rentalprofiles/${userId}/${organizationId}`,

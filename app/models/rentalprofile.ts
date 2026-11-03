@@ -49,7 +49,7 @@ export interface RentalUnitDetailsDTO
   export enum RentalProfileType
   {
     Individual = "INDIVIDUAL",
-    Business = "BUSINESS"
+    Business = "ORGANIZATION"
   }
 
 
