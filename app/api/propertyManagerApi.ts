@@ -121,4 +121,30 @@ export const propertyManagerApi = {
 
         return response.data.data;
     },
+
+    updateUnitListingStatus: async (
+        unitId: number,
+        isListed: boolean,
+        token: string,
+    ): Promise<boolean> => {
+        const response = await propertyManagerApiClient.patch<ApiResponse<boolean>>(
+            `/units/${unitId}/listing/status`,
+            { isListed },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            },
+        );
+
+        if (!response.data.success) {
+            throw new ApiError({
+                message: response.data.message ?? "UNIT_LISTING_UPDATE_FAILED",
+                data: null,
+                statusCode: response.status,
+            });
+        }
+
+        return response.data.data;
+    },
 };

@@ -77,3 +77,22 @@ export const createUnit = async (
         return null;
     }
 };
+
+export const updateUnitListingStatus = async (
+    unitId: number,
+    isListed: boolean,
+    token: string,
+    notificationApi: NotificationInstance,
+): Promise<boolean | null> => {
+    try {
+        return await propertyManagerApi.updateUnitListingStatus(unitId, isListed, token);
+    } catch (error: unknown) {
+        showPropertyApiError(
+            notificationApi,
+            error,
+            "Unable to update unit listing",
+            "The unit's listing status could not be updated.",
+        );
+        return null;
+    }
+};

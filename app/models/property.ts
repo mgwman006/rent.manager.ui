@@ -54,6 +54,10 @@ export interface UnitDetailsDTO {
   roomSize: number;
   sizeUnit: string;
   buildingId: number;
+  isListed?: boolean;
+  listingTitle?: string;
+  description?: string;
+  images?: Array<{ id: number; imageUrl?: string; url?: string }>;
 }
 
 export interface UnitCreateDTO {
