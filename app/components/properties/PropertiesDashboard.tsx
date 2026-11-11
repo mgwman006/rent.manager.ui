@@ -21,8 +21,8 @@ import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext
 import {
     BuildingDetailsDTO,
     PropertyDetailsDTO,
-    UnitDetailsDTO,
     UnitStatus,
+    UnitSummaryDTO,
 } from "../../models/property";
 import { getPropertiesByRentalProfileId, updateUnitListingStatus } from "../../services/propertyService";
 import CreatePropertyForm from "./CreatePropertyForm";
@@ -31,7 +31,7 @@ import CreateUnitModal from "./CreateUnitModal";
 const { Title, Text } = Typography;
 
 interface UnitPreview {
-    unit: UnitDetailsDTO;
+    unit: UnitSummaryDTO;
     propertyName: string;
     buildingName: string;
     address: string;
@@ -103,7 +103,7 @@ export default function PropertiesDashboard() {
         };
     }, [rentalProfileId, token]);
 
-    const handleUnitCreated = (unit: UnitDetailsDTO) => {
+    const handleUnitCreated = (unit: UnitSummaryDTO) => {
         setProperties((currentProperties) => currentProperties.map((property) => ({
             ...property,
             buildings: (property.buildings ?? []).map((building) => (
@@ -114,7 +114,7 @@ export default function PropertiesDashboard() {
         })));
     };
 
-    const handleListingStatusChange = async (unit: UnitDetailsDTO) => {
+    const handleListingStatusChange = async (unit: UnitSummaryDTO) => {
         if (!token) {
             notificationApi.error({
                 message: "Authentication Required",
@@ -164,7 +164,7 @@ export default function PropertiesDashboard() {
     };
 
     const openUnitPreview = (
-        unit: UnitDetailsDTO,
+        unit: UnitSummaryDTO,
         property: PropertyDetailsDTO,
         building: BuildingDetailsDTO,
     ) => {
@@ -182,7 +182,7 @@ export default function PropertiesDashboard() {
     };
 
     const renderUnit = (
-        unit: UnitDetailsDTO,
+        unit: UnitSummaryDTO,
         property: PropertyDetailsDTO,
         building: BuildingDetailsDTO,
     ) => {
@@ -218,7 +218,7 @@ export default function PropertiesDashboard() {
                 )}
             >
                 <List.Item.Meta
-                    title={unit.listingTitle || `Unit ${unit.unitNumber}`}
+                    title={`Unit ${unit.unitNumber}`}
                     description={(
                         <Flex gap="small" wrap="wrap" align="center">
                             <span>{unit.type.toLowerCase().replaceAll("_", " ")}</span>
@@ -423,14 +423,14 @@ export default function PropertiesDashboard() {
                     <Flex vertical gap="middle">
                         <div>
                             <Title level={4} style={{ margin: 0 }}>
-                                {previewUnit.unit.listingTitle || `Unit ${previewUnit.unit.unitNumber}`}
+                                {`Unit ${previewUnit.unit.unitNumber}`}
                             </Title>
                             <Text type="secondary">
                                 {previewUnit.propertyName} · {previewUnit.buildingName}
                             </Text>
                         </div>
                         <Text>{previewUnit.address}</Text>
-                        {previewUnit.unit.description && <Text>{previewUnit.unit.description}</Text>}
+                        {previewUnit.unit.propertyName && <Text>{previewUnit.unit.propertyName}</Text>}
                         {previewUnit.unit.images?.some((image) => image.imageUrl || image.url) && (
                             <Image.PreviewGroup>
                                 <Flex gap="small" wrap="wrap">
@@ -443,7 +443,7 @@ export default function PropertiesDashboard() {
                                                 height={90}
                                                 style={{ objectFit: "cover" }}
                                                 src={image.imageUrl || image.url}
-                                                alt={previewUnit.unit.listingTitle || `Unit ${previewUnit.unit.unitNumber}`}
+                                                alt={`Unit ${previewUnit.unit.unitNumber}`}
                                             />
                                         ))}
                                 </Flex>

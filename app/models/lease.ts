@@ -80,6 +80,7 @@ export interface UpdateLeaseDatesDTO {
 }
 
 export interface RentCreateDTO {
+  id?: number;
   amount: number;
   currency: string;
   frequency: RentFrequency;

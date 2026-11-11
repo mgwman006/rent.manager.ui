@@ -6,7 +6,9 @@ import { leaseApi } from "../../api/api";
 import { LeaseDetailsDTO, LeaseStatus } from "../../models/lease";
 import { useAccount } from "../../store/account/AccountContext";
 import LeaseUnitView from "./LeaseUnitView";
-import LeaseTermView from "./LeaseTermView";
+import LeaseDatesView from "./LeaseDatesView";
+import LeaseRentView from "./LeaseRentView";
+import LeaseTermsView from "./LeaseTermsView";
 import RentCollectionSummaryView from "./RentCollectionSummaryView";
 import TenantView from "./TenantView";
 
@@ -95,8 +97,7 @@ export default function LeaseDetails() {
             key: "dates",
             label: "Dates",
             children: leaseDetails ? (
-                <LeaseTermView
-                    section="dates"
+                <LeaseDatesView
                     leaseDetails={leaseDetails}
                     setLeaseDetails={setLeaseDetails}
                     token={token}
@@ -108,8 +109,7 @@ export default function LeaseDetails() {
             key: "rent",
             label: "Rent",
             children: leaseDetails ? (
-                <LeaseTermView
-                    section="rent"
+                <LeaseRentView
                     leaseDetails={leaseDetails}
                     setLeaseDetails={setLeaseDetails}
                     token={token}
@@ -121,8 +121,7 @@ export default function LeaseDetails() {
             key: "lease-terms",
             label: "Terms and conditions",
             children: leaseDetails ? (
-                <LeaseTermView
-                    section="terms"
+                <LeaseTermsView
                     leaseDetails={leaseDetails}
                     setLeaseDetails={setLeaseDetails}
                     token={token}

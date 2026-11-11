@@ -1,7 +1,7 @@
 import axios from "axios";
 import { ApiResponse } from "../models/common";
 import { ApiError } from "../models/error";
-import { PropertyCreateDTO, PropertyDetailsDTO, UnitCreateDTO, UnitDetailsDTO } from "../models/property";
+import { PropertyCreateDTO, PropertyDetailsDTO, UnitCreateDTO, UnitDetailsDTO, UnitSummaryDTO } from "../models/property";
 
 const propertyManagerApiUrl = import.meta.env.VITE_PROPERTY_MANAGER_API_URL
 const propertyManagerApiClient = axios.create({
@@ -46,6 +46,30 @@ propertyManagerApiClient.interceptors.response.use(
 );
 
 export const propertyManagerApi = {
+    getUnitDetails: async (
+        unitId: number,
+        token: string,
+    ): Promise<UnitDetailsDTO> => {
+        const response = await propertyManagerApiClient.get<ApiResponse<UnitDetailsDTO>>(
+            `/units/${unitId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            },
+        );
+
+        if (!response.data.success) {
+            throw new ApiError({
+                message: response.data.message ?? "UNIT_RETRIEVAL_FAILED",
+                data: null,
+                statusCode: response.status,
+            });
+        }
+
+        return response.data.data;
+    },
+
     getPropertiesByRentalProfileId: async (
         rentalProfileId: number,
         token: string,
@@ -100,8 +124,8 @@ export const propertyManagerApi = {
         buildingId: number,
         requestBody: UnitCreateDTO,
         token: string,
-    ): Promise<UnitDetailsDTO> => {
-        const response = await propertyManagerApiClient.post<ApiResponse<UnitDetailsDTO>>(
+    ): Promise<UnitSummaryDTO> => {
+        const response = await propertyManagerApiClient.post<ApiResponse<UnitSummaryDTO>>(
             `/units/building/${buildingId}`,
             requestBody,
             {

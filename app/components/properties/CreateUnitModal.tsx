@@ -1,6 +1,6 @@
 import { Button, Form, Input, InputNumber, Modal, notification, Select } from "antd";
 import { useState } from "react";
-import { UnitCreateDTO, UnitDetailsDTO, UnitType } from "../../models/property";
+import { UnitCreateDTO, UnitSummaryDTO, UnitType } from "../../models/property";
 import { createUnit } from "../../services/propertyService";
 import { useAccount } from "../../store/account/AccountContext";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
@@ -9,7 +9,7 @@ interface CreateUnitModalProps {
     open: boolean;
     buildingId: number;
     onCancel: () => void;
-    onCreated: (unit: UnitDetailsDTO) => void;
+    onCreated: (unit: UnitSummaryDTO) => void;
 }
 
 export default function CreateUnitModal({

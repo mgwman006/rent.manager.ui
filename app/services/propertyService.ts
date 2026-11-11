@@ -1,7 +1,7 @@
 import { NotificationInstance } from "antd/es/notification/interface";
 import { propertyManagerApi } from "../api/propertyManagerApi";
 import { ApiError } from "../models/error";
-import { PropertyCreateDTO, PropertyDetailsDTO, UnitCreateDTO, UnitDetailsDTO } from "../models/property";
+import { PropertyCreateDTO, PropertyDetailsDTO, UnitCreateDTO, UnitDetailsDTO, UnitSummaryDTO } from "../models/property";
 
 const showPropertyApiError = (
     notificationApi: NotificationInstance,
@@ -40,6 +40,24 @@ export const getPropertiesByRentalProfileId = async (
     }
 };
 
+export const getUnitDetails = async (
+    unitId: number,
+    token: string,
+    notificationApi: NotificationInstance,
+): Promise<UnitDetailsDTO | null> => {
+    try {
+        return await propertyManagerApi.getUnitDetails(unitId, token);
+    } catch (error: unknown) {
+        showPropertyApiError(
+            notificationApi,
+            error,
+            "Unable to load unit details",
+            "The details for this unit could not be loaded.",
+        );
+        return null;
+    }
+};
+
 export const createProperty = async (
     rentalProfileId: number,
     request: PropertyCreateDTO,
@@ -64,7 +82,7 @@ export const createUnit = async (
     request: UnitCreateDTO,
     token: string,
     notificationApi: NotificationInstance,
-): Promise<UnitDetailsDTO | null> => {
+): Promise<UnitSummaryDTO | null> => {
     try {
         return await propertyManagerApi.createUnit(buildingId, request, token);
     } catch (error: unknown) {
