@@ -68,6 +68,7 @@ export interface LeaseCreateDTO {
   endDate?: string;
   rent: RentDTO;
   fullLeasePaymentRequired: boolean;
+  leaseTerms?: string;
 }
 
 export interface LeaseTermsUpdateDTO {

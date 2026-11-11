@@ -2,10 +2,9 @@
 
 
 
-import { Descriptions, Form, FormInstance, InputNumber, Typography } from "antd";
+import { Descriptions, Form, FormInstance, Typography } from "antd";
 import { LeaseCreateDTO } from "../../../models/lease";
-
-const { Text } = Typography;
+import { sanitizeRichText } from "../RichTextEditor";
 
 interface ReviewStepProps {
   leaseForm: FormInstance<LeaseCreateDTO>;
@@ -45,6 +44,16 @@ export default function ReviewStep({
                 </Descriptions.Item>
                 <Descriptions.Item label="Full Payment Required">
                     {leaseFormValues?.fullLeasePaymentRequired ? "Yes" : "No"}
+                </Descriptions.Item>
+                <Descriptions.Item label="Terms and Conditions">
+                    {leaseFormValues?.leaseTerms?.trim() ? (
+                        <div
+                            style={{ overflowWrap: "anywhere" }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeRichText(leaseFormValues.leaseTerms) }}
+                        />
+                    ) : (
+                        <Typography.Text type="secondary">Not provided</Typography.Text>
+                    )}
                 </Descriptions.Item>
             </Descriptions>
         </>
