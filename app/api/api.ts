@@ -3,7 +3,7 @@ import { ApiResponse } from '../models/common';
 import { ApiError } from '../models/error';
 import { MembershipDetailsDTO, LeaseInvitationCreateDTO, LeaseInvitationDetailsDTO } from '../models/user';
 import { CreateRentalProfileDTO, RentalProfileDetailsDTO } from '../models/rentalprofile';
-import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, MonthlyCollectionSummaryDTO, RentSummaryDTO } from '../models/lease';
+import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, MonthlyCollectionSummaryDTO, RentSummaryDTO, UpdateLeaseDatesDTO, UpdateLeaseRentDTO } from '../models/lease';
 import { PaymentTransactionCreateDTO } from '../models/payments';
 import { recordPayment } from '../services/paymentService';
 
@@ -176,13 +176,41 @@ export const leaseApi = {
     return handleResponse(res.data);
   },
 
-  updateLease: async (id: number, requestBody: LeaseTermsUpdateDTO, token: string) => {
+  updateLeaseTerms: async (id: number, requestBody: LeaseTermsUpdateDTO, token: string) => {
     const res = await apiClient.patch<ApiResponse<LeaseDetailsDTO>>(
       `/leases/${id}/terms`,
       requestBody,
       {
         headers: {
           'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  updateLeaseDates: async (id: number, requestBody: UpdateLeaseDatesDTO, token: string) => {
+    const res = await apiClient.patch<ApiResponse<LeaseDetailsDTO>>(
+      `/leases/${id}/dates`,
+      requestBody,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  updateLeaseRent: async (id: number, requestBody: UpdateLeaseRentDTO, token: string) => {
+    const res = await apiClient.patch<ApiResponse<LeaseDetailsDTO>>(
+      `/leases/${id}/rent`,
+      requestBody,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
       }
     );
