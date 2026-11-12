@@ -1,77 +1,90 @@
-import { Card, Col, Drawer, Flex, Row, Button, Tag, Descriptions, Space, Listy, notification, Spin, Result, Badge, Alert, Modal, Form, InputNumber, Input, Avatar, Radio, TableProps, Table, Tabs, TabsProps } from "antd";
-import { UserOutlined, CalendarOutlined, DollarOutlined, FieldTimeOutlined, EditFilled, PlusCircleOutlined, PlusOutlined, AlignLeftOutlined, ArrowLeftOutlined, EditOutlined, BookOutlined, BellOutlined, ArrowRightOutlined } from "@ant-design/icons";
-import { Typography } from "antd";
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import { Button, Card, Flex, Result, Spin, Tabs, TabsProps, Tag, Typography, notification } from "antd";
 import { useEffect, useState } from "react";
-import { LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, PaymentBlockSummaryDTO, RentSummaryDTO } from "../../models/lease";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { leaseApi } from "../../api/api";
+import { LeaseDetailsDTO, LeaseStatus } from "../../models/lease";
 import { useAccount } from "../../store/account/AccountContext";
-import { leaseApi, leaseInvitationApi } from "../../api/api";
-import { sentInvite } from "../../services/invitationService";
-import { getRentSummary, updateLeaseTerms } from "../../services/leaseService";
-import TenantView from "./TenantView";
-import LeaseTermView from "./LeaseTermView";
-import RentCollectionSummaryView from "./RentCollectionSummaryView";
 import LeaseUnitView from "./LeaseUnitView";
-const { Text } = Typography;
-const { Meta } = Card;
+import LeaseDatesView from "./LeaseDatesView";
+import LeaseRentView from "./LeaseRentView";
+import LeaseTermsView from "./LeaseTermsView";
+import RentCollectionSummaryView from "./RentCollectionSummaryView";
+import TenantView from "./TenantView";
 
+const statusColor: Record<LeaseStatus, string> = {
+    [LeaseStatus.ACTIVE]: "green",
+    [LeaseStatus.ENDED]: "default",
+    [LeaseStatus.TERMINATED]: "red",
+    [LeaseStatus.PENDING]: "gold",
+    [LeaseStatus.PENDING_LANDLORD_APPROVAL]: "processing",
+    [LeaseStatus.PENDING_TENANT_APPROVAL]: "processing",
+};
 
-export default function LeaseDetails()
-{
+export default function LeaseDetails() {
     const { leaseIdParam } = useParams();
+    const leaseId = Number(leaseIdParam);
     const [notificationApi, contextHolder] = notification.useNotification();
     const [leaseDetails, setLeaseDetails] = useState<LeaseDetailsDTO | null>(null);
-    const [leaseId, setLeaseId] = useState<number>(leaseIdParam ? parseInt(leaseIdParam, 10) : 0);
+    const [leaseLoading, setLeaseLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const { accountState } = useAccount();
-    const [leaseLoading, setLeaseLoading] = useState(false);
     const navigate = useNavigate();
-
     const token = accountState.accountDetails?.token ?? "";
 
-    if (isNaN(leaseId)) {
-        return <div>Invalid lease id</div>;
-    }
-
-
-    const loadLeaseDetails = async () => 
-    {
-        if (!token) {
-          notificationApi.error({
-            message: "Authentication Required",
-            description: "Please sign in again to load rental profile details.",
-          });
-          return;
-        }
-        setLeaseLoading(true);
-        try {
-          const data = await leaseApi.getLeaseById(leaseId, token);
-          console.log(JSON.stringify(data));
-          setLeaseDetails(data);
-        } catch (error: any) {
-          notificationApi.error({
-            message: "Failed to load Lease",
-            description: error?.message ?? "Unable to fetch lease details.",
-          });
-        } finally {
+    useEffect(() => {
+        if (!Number.isSafeInteger(leaseId) || leaseId <= 0) {
             setLeaseLoading(false);
+            setLoadError("The lease ID is invalid.");
+            return;
         }
-      };
 
-    
+        if (!token) {
+            setLeaseLoading(false);
+            setLoadError("Sign in again to view this lease.");
+            return;
+        }
 
-    const tabItems: TabsProps['items'] = [
+        let cancelled = false;
+        setLeaseLoading(true);
+        setLoadError(null);
+        leaseApi.getLeaseById(leaseId, token)
+            .then((data) => {
+                if (!cancelled) setLeaseDetails(data);
+            })
+            .catch((error: unknown) => {
+                if (cancelled) return;
+                const message = error instanceof Error ? error.message : "Unable to fetch lease details.";
+                setLoadError(message);
+                notificationApi.error({
+                    message: "Failed to load lease",
+                    description: message,
+                });
+            })
+            .finally(() => {
+                if (!cancelled) setLeaseLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [leaseId, notificationApi, token]);
+
+    const tabItems: TabsProps["items"] = [
         {
-            key: '1',
-            label: 'Tenant',
-            children: TenantView (
+            key: "tenant",
+            label: "Tenant",
+            children: TenantView(
                 leaseId,
-                leaseDetails?.tenant ? leaseDetails.tenant : null, 
-                leaseDetails?.invitations ? leaseDetails.invitations : [], 
-                token,notificationApi),
+                leaseDetails?.tenant ?? null,
+                leaseDetails?.invitations ?? [],
+                token,
+                notificationApi,
+            ),
         },
         {
-            key: '2',
-            label: 'Unit',
+            key: "unit",
+            label: "Unit",
             children: leaseDetails ? (
                 <LeaseUnitView
                     leaseDetails={leaseDetails}
@@ -81,10 +94,10 @@ export default function LeaseDetails()
             ) : null,
         },
         {
-            key: '3',
-            label: 'Terms',
+            key: "dates",
+            label: "Dates",
             children: leaseDetails ? (
-                <LeaseTermView
+                <LeaseDatesView
                     leaseDetails={leaseDetails}
                     setLeaseDetails={setLeaseDetails}
                     token={token}
@@ -93,60 +106,96 @@ export default function LeaseDetails()
             ) : null,
         },
         {
-            key: '4',
-            label: 'Payment',
-            children: <RentCollectionSummaryView 
-                leaseId={leaseDetails?.id}
-                leaseStatus={leaseDetails?.status ?? LeaseStatus.PENDING}
-                token={token}
-                notificationApi={notificationApi}
-             />,
+            key: "rent",
+            label: "Rent",
+            children: leaseDetails ? (
+                <LeaseRentView
+                    leaseDetails={leaseDetails}
+                    setLeaseDetails={setLeaseDetails}
+                    token={token}
+                    notificationApi={notificationApi}
+                />
+            ) : null,
+        },
+        {
+            key: "lease-terms",
+            label: "Terms and conditions",
+            children: leaseDetails ? (
+                <LeaseTermsView
+                    leaseDetails={leaseDetails}
+                    setLeaseDetails={setLeaseDetails}
+                    token={token}
+                    notificationApi={notificationApi}
+                />
+            ) : null,
+        },
+        {
+            key: "payment",
+            label: "Payment",
+            children: (
+                <RentCollectionSummaryView
+                    leaseId={leaseDetails?.id}
+                    leaseStatus={leaseDetails?.status ?? LeaseStatus.PENDING}
+                    token={token}
+                    notificationApi={notificationApi}
+                />
+            ),
         },
     ];
-    
-    useEffect(
-        () =>
-        {
-            loadLeaseDetails();
-        },[]
-    )
 
-    
-    if(leaseLoading) {
     return (
-      <div style={{ textAlign: "center", paddingTop: 50 }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  
-    return (
-        <div>
+        <div style={{ width: "100%", minWidth: 0 }}>
             {contextHolder}
-            {leaseDetails && (
-                <>
-                    <Row>
-                        <Col span={24}>
-                            <Button color="default" variant="text" onClick={() => navigate(-1)}><ArrowLeftOutlined /> Back</Button>
-                        </Col>
-                    </Row>
+            <Flex vertical gap="middle">
+                <Button
+                    icon={<ArrowLeftOutlined />}
+                    type="text"
+                    onClick={() => navigate(-1)}
+                    style={{ alignSelf: "flex-start" }}
+                >
+                    Back
+                </Button>
 
-                    <Row>
-                        <Col span={24}>
-                            <Typography.Title level={3}>Lease Details</Typography.Title>
-                        </Col>
-                    </Row>
+                {leaseLoading ? (
+                    <Flex justify="center" style={{ padding: 48 }}>
+                        <Spin size="large" />
+                    </Flex>
+                ) : loadError || !leaseDetails ? (
+                    <Result
+                        status="warning"
+                        title="Lease details unavailable"
+                        subTitle={loadError ?? "The lease could not be found."}
+                    />
+                ) : (
+                    <>
+                        <Card size="small">
+                            <Flex justify="space-between" align="center" gap="middle" wrap="wrap">
+                                <div>
+                                    <Typography.Title level={3} style={{ margin: 0 }}>
+                                        Lease details
+                                    </Typography.Title>
+                                    <Typography.Text type="secondary">
+                                        Reference {leaseDetails.referenceNumber || `#${leaseDetails.id}`}
+                                    </Typography.Text>
+                                </div>
+                                <Tag color={statusColor[leaseDetails.status]}>
+                                    {leaseDetails.status.replaceAll("_", " ")}
+                                </Tag>
+                            </Flex>
+                        </Card>
 
-                    <Row>
-                        <Col span={24}>
-                            <Tabs defaultActiveKey="1" items={tabItems} />
-                        </Col>
-                    </Row>              
-
-                </>
-            )}
-      
+                        <Card styles={{ body: { padding: "8px 16px" } }}>
+                            <Tabs
+                                defaultActiveKey="tenant"
+                                items={tabItems}
+                                size="large"
+                                tabBarGutter={24}
+                                destroyOnHidden
+                            />
+                        </Card>
+                    </>
+                )}
+            </Flex>
         </div>
     );
 }

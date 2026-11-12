@@ -1,6 +1,6 @@
 import { NotificationInstance } from "antd/es/notification/interface";
 import { leaseApi } from "../api/api";
-import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, MonthlyCollectionSummaryDTO, RentSummaryDTO } from "../models/lease";
+import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, MonthlyCollectionSummaryDTO, RentSummaryDTO, UpdateLeaseDatesDTO, UpdateLeaseRentDTO } from "../models/lease";
 import { ApiError } from "../models/error";
 
 
@@ -98,23 +98,59 @@ export const createLease = async (
 }
 
 
-export const updateLeaseTerms = async (leaseId:number,leaseTerms:LeaseTermsUpdateDTO, token:string,notificationApi:NotificationInstance) : Promise<LeaseDetailsDTO | null> => {
-    try {
-        const updatedLease = await leaseApi.updateLease(leaseId,leaseTerms,token);
-            return updatedLease;
+const updateLease = async (
+        request: () => Promise<LeaseDetailsDTO>,
+        notificationApi: NotificationInstance,
+        fallbackDescription: string,
+): Promise<LeaseDetailsDTO | null> => {
+        try {
+            return await request();
         } catch (error: unknown) {
             const apiError = error as ApiError;
             notificationApi.error({
                 message: apiError.message ?? "Failed to update lease",
-                 description: apiError.details
-                ? typeof apiError.details === "string"
-                    ? apiError.details
-                    : JSON.stringify(apiError.details)
-                : "Unable to update lease terms.",
+                description: apiError.details
+                    ? typeof apiError.details === "string"
+                        ? apiError.details
+                        : JSON.stringify(apiError.details)
+                    : fallbackDescription,
             });
             return null;
         }
-}
+};
+
+export const updateLeaseTerms = async (
+        leaseId: number,
+        leaseTerms: LeaseTermsUpdateDTO,
+        token: string,
+        notificationApi: NotificationInstance,
+): Promise<LeaseDetailsDTO | null> => updateLease(
+        () => leaseApi.updateLeaseTerms(leaseId, leaseTerms, token),
+        notificationApi,
+        "Unable to update lease terms.",
+);
+
+export const updateLeaseDates = async (
+        leaseId: number,
+        dates: UpdateLeaseDatesDTO,
+        token: string,
+        notificationApi: NotificationInstance,
+): Promise<LeaseDetailsDTO | null> => updateLease(
+        () => leaseApi.updateLeaseDates(leaseId, dates, token),
+        notificationApi,
+        "Unable to update lease dates.",
+);
+
+export const updateLeaseRent = async (
+        leaseId: number,
+        rent: UpdateLeaseRentDTO,
+        token: string,
+        notificationApi: NotificationInstance,
+): Promise<LeaseDetailsDTO | null> => updateLease(
+        () => leaseApi.updateLeaseRent(leaseId, rent, token),
+        notificationApi,
+        "Unable to update lease rent.",
+);
 
 
 export const getMonthlyCollectionSummary = async (rentalProfileId:number,month:number, year:number, token: string, notificationApi:NotificationInstance) :Promise<MonthlyCollectionSummaryDTO | null> => {
