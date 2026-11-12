@@ -44,6 +44,7 @@ export interface LeaseDetailsDTO {
   endDate: string; // ISO date
   rent: RentDTO,
   fullLeasePaymentRequired:boolean;
+  leaseTerms?: string;
   status: LeaseStatus;
   tenant: TenantDetailsDTO;
   invitations: LeaseInvitationDetailsDTO[];
@@ -67,12 +68,27 @@ export interface LeaseCreateDTO {
   endDate?: string;
   rent: RentDTO;
   fullLeasePaymentRequired: boolean;
+  leaseTerms?: string;
 }
 
 export interface LeaseTermsUpdateDTO {
-  startDate?: string;
-  endDate?: string;
-  rent: RentDTO;
+  leaseTerms: string;
+}
+
+export interface UpdateLeaseDatesDTO {
+  startDate: string;
+  endDate: string;
+}
+
+export interface RentCreateDTO {
+  id?: number;
+  amount: number;
+  currency: string;
+  frequency: RentFrequency;
+}
+
+export interface UpdateLeaseRentDTO {
+  rent: RentCreateDTO;
   fullLeasePaymentRequired: boolean;
 }
 
@@ -115,4 +131,3 @@ export interface MonthlyCollectionSummaryDTO {
   totalOutstandingAmount: number;
   progressPercentage:number
 }
-

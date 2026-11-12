@@ -6,33 +6,44 @@ import {
     Collapse,
     Descriptions,
     Flex,
+    Image,
     List,
+    Modal,
     notification,
     Result,
     Spin,
     Tag,
     Typography,
 } from "antd";
-import { PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+import { EyeOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
 import { useAccount } from "../../store/account/AccountContext";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
 import {
     BuildingDetailsDTO,
     PropertyDetailsDTO,
-    UnitDetailsDTO,
     UnitStatus,
+    UnitSummaryDTO,
 } from "../../models/property";
-import { getPropertiesByRentalProfileId } from "../../services/propertyService";
+import { getPropertiesByRentalProfileId, updateUnitListingStatus } from "../../services/propertyService";
 import CreatePropertyForm from "./CreatePropertyForm";
 import CreateUnitModal from "./CreateUnitModal";
 
 const { Title, Text } = Typography;
+
+interface UnitPreview {
+    unit: UnitSummaryDTO;
+    propertyName: string;
+    buildingName: string;
+    address: string;
+}
 
 export default function PropertiesDashboard() {
     const [properties, setProperties] = useState<PropertyDetailsDTO[]>([]);
     const [loading, setLoading] = useState(false);
     const [createPropertyOpen, setCreatePropertyOpen] = useState(false);
     const [createUnitBuilding, setCreateUnitBuilding] = useState<BuildingDetailsDTO | null>(null);
+    const [previewUnit, setPreviewUnit] = useState<UnitPreview | null>(null);
+    const [updatingListingUnitIds, setUpdatingListingUnitIds] = useState<Set<number>>(new Set());
     const [notificationApi, contextHolder] = notification.useNotification();
     const { accountState } = useAccount();
     const { rentalProfileState } = useRentalProfile();
@@ -50,6 +61,16 @@ export default function PropertiesDashboard() {
         () => properties.reduce(
             (total, property) => total + (property.buildings ?? []).reduce(
                 (buildingTotal, building) => buildingTotal + (building.units?.length ?? 0),
+                0,
+            ),
+            0,
+        ),
+        [properties],
+    );
+    const listedUnitCount = useMemo(
+        () => properties.reduce(
+            (total, property) => total + (property.buildings ?? []).reduce(
+                (buildingTotal, building) => buildingTotal + (building.units ?? []).filter((unit) => unit.isListed).length,
                 0,
             ),
             0,
@@ -82,7 +103,7 @@ export default function PropertiesDashboard() {
         };
     }, [rentalProfileId, token]);
 
-    const handleUnitCreated = (unit: UnitDetailsDTO) => {
+    const handleUnitCreated = (unit: UnitSummaryDTO) => {
         setProperties((currentProperties) => currentProperties.map((property) => ({
             ...property,
             buildings: (property.buildings ?? []).map((building) => (
@@ -93,7 +114,78 @@ export default function PropertiesDashboard() {
         })));
     };
 
-    const renderUnit = (unit: UnitDetailsDTO) => {
+    const handleListingStatusChange = async (unit: UnitSummaryDTO) => {
+        if (!token) {
+            notificationApi.error({
+                message: "Authentication Required",
+                description: "Sign in again to update a unit listing.",
+            });
+            return;
+        }
+
+        const isListed = !unit.isListed;
+        setUpdatingListingUnitIds((current) => new Set(current).add(unit.id));
+        try {
+            const updatedStatus = await updateUnitListingStatus(
+                unit.id,
+                isListed,
+                token,
+                notificationApi,
+            );
+            if (updatedStatus === null) return;
+
+            setProperties((currentProperties) => currentProperties.map((property) => ({
+                ...property,
+                buildings: (property.buildings ?? []).map((building) => ({
+                    ...building,
+                    units: (building.units ?? []).map((currentUnit) => (
+                        currentUnit.id === unit.id
+                            ? { ...currentUnit, isListed: updatedStatus }
+                            : currentUnit
+                    )),
+                })),
+            })));
+            setPreviewUnit((current) => (
+                current?.unit.id === unit.id
+                    ? { ...current, unit: { ...current.unit, isListed: updatedStatus } }
+                    : current
+            ));
+            notificationApi.success({
+                message: updatedStatus ? "Unit advertised" : "Unit unlisted",
+                description: `Unit ${unit.unitNumber} ${updatedStatus ? "is now visible" : "is no longer visible"} in the advertising app.`,
+            });
+        } finally {
+            setUpdatingListingUnitIds((current) => {
+                const next = new Set(current);
+                next.delete(unit.id);
+                return next;
+            });
+        }
+    };
+
+    const openUnitPreview = (
+        unit: UnitSummaryDTO,
+        property: PropertyDetailsDTO,
+        building: BuildingDetailsDTO,
+    ) => {
+        const address = property.location?.address;
+        setPreviewUnit({
+            unit,
+            propertyName: property.name,
+            buildingName: building.name || building.code || `Building ${building.id}`,
+            address: address
+                ? [address.streetNumber, address.streetName, address.ward, address.city, address.region, address.country]
+                    .filter(Boolean)
+                    .join(", ")
+                : "Address not available",
+        });
+    };
+
+    const renderUnit = (
+        unit: UnitSummaryDTO,
+        property: PropertyDetailsDTO,
+        building: BuildingDetailsDTO,
+    ) => {
         const statusColor = unit.status === UnitStatus.AVAILABLE
             ? "green"
             : unit.status === UnitStatus.OCCUPIED
@@ -103,7 +195,28 @@ export default function PropertiesDashboard() {
                     : "default";
 
         return (
-            <List.Item key={unit.id}>
+            <List.Item
+                key={unit.id}
+                extra={(
+                    unit.isListed ? (
+                        <Button
+                            icon={<EyeOutlined />}
+                            onClick={() => openUnitPreview(unit, property, building)}
+                        >
+                            Preview
+                        </Button>
+                    ) : (
+                            <Button
+                                type="primary"
+                                loading={updatingListingUnitIds.has(unit.id)}
+                                disabled={updatingListingUnitIds.has(unit.id)}
+                                onClick={() => handleListingStatusChange(unit)}
+                            >
+                                Advertise
+                            </Button>
+                    )
+                )}
+            >
                 <List.Item.Meta
                     title={`Unit ${unit.unitNumber}`}
                     description={(
@@ -113,6 +226,9 @@ export default function PropertiesDashboard() {
                             <span>{unit.numberOfBathrooms} bath</span>
                             <span>{unit.rentAmount} rent</span>
                             <Tag color={statusColor}>{unit.status}</Tag>
+                            <Tag color={unit.isListed ? "blue" : "default"}>
+                                {unit.isListed ? "Advertised" : "Not advertised"}
+                            </Tag>
                         </Flex>
                     )}
                 />
@@ -120,7 +236,7 @@ export default function PropertiesDashboard() {
         );
     };
 
-    const renderBuilding = (building: BuildingDetailsDTO) => (
+    const renderBuilding = (building: BuildingDetailsDTO, property: PropertyDetailsDTO) => (
         <Card
             key={building.id}
             size="small"
@@ -142,7 +258,7 @@ export default function PropertiesDashboard() {
                     size="small"
                     dataSource={building.units}
                     rowKey="id"
-                    renderItem={renderUnit}
+                    renderItem={(unit) => renderUnit(unit, property, building)}
                 />
             ) : (
                 <Text type="secondary">No units in this building yet.</Text>
@@ -189,7 +305,7 @@ export default function PropertiesDashboard() {
                     </Descriptions>
                     {buildingTotal ? (
                         <Flex vertical gap="middle">
-                            {(property.buildings ?? []).map(renderBuilding)}
+                            {(property.buildings ?? []).map((building) => renderBuilding(building, property))}
                         </Flex>
                     ) : (
                         <Alert
@@ -267,6 +383,7 @@ export default function PropertiesDashboard() {
                             <Tag>{properties.length} {properties.length === 1 ? "property" : "properties"}</Tag>
                             <Tag>{buildingCount} {buildingCount === 1 ? "building" : "buildings"}</Tag>
                             <Tag>{unitCount} {unitCount === 1 ? "unit" : "units"}</Tag>
+                            <Tag color="blue">{listedUnitCount} advertised</Tag>
                         </Flex>
                         <Collapse items={propertyItems} />
                     </>
@@ -295,6 +412,63 @@ export default function PropertiesDashboard() {
                     }}
                 />
             )}
+            <Modal
+                title="Unit advertisement preview"
+                open={Boolean(previewUnit)}
+                onCancel={() => setPreviewUnit(null)}
+                footer={null}
+                destroyOnHidden
+            >
+                {previewUnit && (
+                    <Flex vertical gap="middle">
+                        <div>
+                            <Title level={4} style={{ margin: 0 }}>
+                                {`Unit ${previewUnit.unit.unitNumber}`}
+                            </Title>
+                            <Text type="secondary">
+                                {previewUnit.propertyName} · {previewUnit.buildingName}
+                            </Text>
+                        </div>
+                        <Text>{previewUnit.address}</Text>
+                        {previewUnit.unit.propertyName && <Text>{previewUnit.unit.propertyName}</Text>}
+                        {previewUnit.unit.images?.some((image) => image.imageUrl || image.url) && (
+                            <Image.PreviewGroup>
+                                <Flex gap="small" wrap="wrap">
+                                    {previewUnit.unit.images
+                                        .filter((image) => image.imageUrl || image.url)
+                                        .map((image) => (
+                                            <Image
+                                                key={image.id}
+                                                width={120}
+                                                height={90}
+                                                style={{ objectFit: "cover" }}
+                                                src={image.imageUrl || image.url}
+                                                alt={`Unit ${previewUnit.unit.unitNumber}`}
+                                            />
+                                        ))}
+                                </Flex>
+                            </Image.PreviewGroup>
+                        )}
+                        <Descriptions size="small" column={{ xs: 1, sm: 2 }} bordered>
+                            <Descriptions.Item label="Rent">{previewUnit.unit.rentAmount}</Descriptions.Item>
+                            <Descriptions.Item label="Type">
+                                {previewUnit.unit.type.toLowerCase().replaceAll("_", " ")}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Bedrooms">{previewUnit.unit.numberOfBedrooms}</Descriptions.Item>
+                            <Descriptions.Item label="Bathrooms">{previewUnit.unit.numberOfBathrooms}</Descriptions.Item>
+                            <Descriptions.Item label="Size">
+                                {previewUnit.unit.roomSize} {previewUnit.unit.sizeUnit}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Parking">{previewUnit.unit.numberParkingSpots}</Descriptions.Item>
+                            <Descriptions.Item label="Availability">
+                                <Tag color={previewUnit.unit.status === UnitStatus.AVAILABLE ? "green" : "default"}>
+                                    {previewUnit.unit.status}
+                                </Tag>
+                            </Descriptions.Item>
+                        </Descriptions>
+                    </Flex>
+                )}
+            </Modal>
         </div>
     );
 }

@@ -49,7 +49,8 @@ export interface RentalUnitDetailsDTO
   export enum RentalProfileType
   {
     Individual = "INDIVIDUAL",
-    Business = "ORGANIZATION"
+    Business = "BUSINESS",
+    Enterprise = "ENTERPRISE"
   }
 
 

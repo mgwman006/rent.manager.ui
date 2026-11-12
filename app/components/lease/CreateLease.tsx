@@ -2,6 +2,7 @@ import { Button, Col, Flex, Form, notification, Result, Row, Steps } from "antd"
 import TenantDetailsStep from "./createleasesteps/TenantDetailsStep";
 import PropertyDetailsStep from "./createleasesteps/PropertyDetailsStep";
 import RentDetailsStep from "./createleasesteps/RentDetailsStep";
+import DatesStep from "./createleasesteps/DatesStep";
 import ReviewStep from "./createleasesteps/ReviewStep";
 import TermsStep from "./createleasesteps/TermsStep";
 import { LeaseCreateDTO, LeaseDetailsDTO } from "../../models/lease";
@@ -10,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
 import { useAccount } from "../../store/account/AccountContext";
 import { createLease } from "../../services/leaseService";
-import { PlusOutlined, MoreOutlined, RightOutlined, LeftOutlined } from "@ant-design/icons";
+import { RightOutlined, LeftOutlined } from "@ant-design/icons";
 
 
 
@@ -32,14 +33,10 @@ export default function(){
         },
         { title: "Property Details" },
         { title: "Rent Details" },
+        { title: "Dates" },
         { title: "Terms" },
-        { 
-            title: "Review" 
-
-        },
-        { 
-            title: "Results" 
-        },
+        { title: "Review" },
+        { title: "Results" },
     ]
 
     const handleCreateLease = async () => {
@@ -82,8 +79,10 @@ export default function(){
                 ["rent", "amount"],
                 ["rent", "currency"],
                 ["rent", "frequency"],
+                "fullLeasePaymentRequired",
             ],
-            ["startDate", "endDate", "fullLeasePaymentRequired"],
+            ["startDate", "endDate"],
+            [],
         ];
 
         try {
@@ -125,14 +124,18 @@ export default function(){
                     )}
 
                     {createLeaseStep === 3 && (
-                        <TermsStep/>
+                        <DatesStep />
                     )}
 
                     {createLeaseStep === 4 && (
-                        <ReviewStep leaseForm={leaseForm} />
+                        <TermsStep/>
                     )}
 
                     {createLeaseStep === 5 && (
+                        <ReviewStep leaseForm={leaseForm} />
+                    )}
+
+                    {createLeaseStep === 6 && (
                         <Result
                             status="success"
                             title="Successfully Created a Lease"
@@ -153,18 +156,18 @@ export default function(){
 
                 <Row justify="space-between">
                         <Col>
-                            {createLeaseStep > 0 && createLeaseStep<5 && (
+                            {createLeaseStep > 0 && createLeaseStep<6 && (
                                 <Button size="large" onClick={() => setCreateLeaseStep((step) => step - 1)}>
                                    <LeftOutlined /> Back
                                 </Button>
                             )}
                         </Col>
                         <Col>
-                            {createLeaseStep < 4 ? (
+                            {createLeaseStep < 5 ? (
                                 <Button size="large" type="primary" onClick={goToNextCreateLeaseStep}>
                                     Next <RightOutlined />
                                 </Button>
-                            ) : createLeaseStep <5 ? (
+                            ) : createLeaseStep === 5 ? (
                                 <Button
                                     size="large"
                                     type="primary"
