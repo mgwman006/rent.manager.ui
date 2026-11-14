@@ -92,7 +92,7 @@ export default function LeaseUnitView({
     const address = unit.building?.property?.location?.address;
     const addressText = address
         ? [
-            address.streetNumber,
+            address.houseNumber,
             address.streetName,
             address.ward,
             address.city,

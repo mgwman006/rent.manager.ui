@@ -27,6 +27,7 @@ import {
 import { getPropertiesByRentalProfileId, updateUnitListingStatus } from "../../services/propertyService";
 import CreatePropertyForm from "./CreatePropertyForm";
 import CreateUnitModal from "./CreateUnitModal";
+import { sanitizeRichText } from "../lease/RichTextEditor";
 
 const { Title, Text } = Typography;
 
@@ -174,7 +175,7 @@ export default function PropertiesDashboard() {
             propertyName: property.name,
             buildingName: building.name || building.code || `Building ${building.id}`,
             address: address
-                ? [address.streetNumber, address.streetName, address.ward, address.city, address.region, address.country]
+                ? [address.houseNumber, address.streetName, address.ward, address.city, address.region, address.country]
                     .filter(Boolean)
                     .join(", ")
                 : "Address not available",
@@ -278,7 +279,7 @@ export default function PropertiesDashboard() {
     const propertyItems = properties.map((property) => {
         const address = property.location?.address;
         const addressText = address
-            ? [address.streetNumber, address.streetName, address.ward, address.city, address.region]
+            ? [address.houseNumber, address.streetName, address.ward, address.city, address.region]
                 .filter(Boolean)
                 .join(", ")
             : "Address not provided";
@@ -309,7 +310,12 @@ export default function PropertiesDashboard() {
                         <Descriptions.Item label="Type">{property.type?.replaceAll("_", " ") || "-"}</Descriptions.Item>
                         <Descriptions.Item label="Development Status">{property.developmentStatus?.replaceAll("_", " ") || "-"}</Descriptions.Item>
                         {property.description && (
-                            <Descriptions.Item label="Description" span={3}>{property.description}</Descriptions.Item>
+                            <Descriptions.Item label="Description" span={3}>
+                                <div
+                                    style={{ overflowWrap: "anywhere" }}
+                                    dangerouslySetInnerHTML={{ __html: sanitizeRichText(property.description) }}
+                                />
+                            </Descriptions.Item>
                         )}
                     </Descriptions>
                     {buildingTotal ? (
