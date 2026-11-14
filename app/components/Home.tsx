@@ -10,12 +10,10 @@ import {
 
 import {
   DashboardFilled,
-  DashboardOutlined,
-  FileDoneOutlined,
+  CalendarOutlined,
   FileFilled,
   HomeFilled,
   MenuOutlined,
-  UserOutlined,
 } from '@ant-design/icons';
 
 import { Outlet, Link } from 'react-router-dom';
@@ -26,10 +24,11 @@ const { Header, Content } = Layout;
 const { useBreakpoint } = Grid;
 
 const navItems = [
-  { key: 'home', label: <Link to="/"><Avatar size="small" icon={<HomeFilled />}/> Home</Link>, to: '/' },
+  { key: 'home', label: <Link to="/"><Avatar size="small" icon={<HomeFilled />}/> Profiles</Link>, to: '/' },
   { key: 'dashborad', label: <Link to="/rental-profile"><Avatar size="small" icon={<DashboardFilled />}/> Dash borad</Link>, to: '/rental-profile' },
   { key: 'leases', label: <Link to="/rental-profile/leases"><Avatar size={'small'} icon={<FileFilled />}/> Leases</Link>, to: '/rental-profile/leases' },
   { key: 'properties', label: <Link to="/rental-profile/properties" ><Avatar size="small" icon={<HomeFilled />}/> Properties</Link> , to: '/rental-profile/properties' },
+  { key: 'viewings', label: <Link to="/rental-profile/viewings"><Avatar size="small" icon={<CalendarOutlined />}/> Viewing Bookings</Link>, to: '/rental-profile/viewings' },
 ];
 
 export default function AppLayout() {

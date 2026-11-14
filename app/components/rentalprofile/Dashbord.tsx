@@ -3,6 +3,7 @@ import {
   BankOutlined,
   BellOutlined,
   BookOutlined,
+  CalendarOutlined,
   HomeOutlined,
   HomeTwoTone,
   RightOutlined,
@@ -196,6 +197,13 @@ const summaryCards = [
       icon: <BookOutlined />, 
       color: "#F7FFF2" ,
       onClick: () => navigate("leases"),
+    },
+    {
+      title: "Viewings",
+      value: "Review and manage unit viewing requests",
+      icon: <CalendarOutlined />,
+      color: "#FFF7E8",
+      onClick: () => navigate("viewings"),
     },
     {
       title: "Invitations",
