@@ -6,7 +6,9 @@ import {
     Descriptions,
     Flex,
     Form,
+    Grid,
     Input,
+    List,
     Modal,
     Popconfirm,
     Result,
@@ -73,6 +75,8 @@ export default function ViewingsDashboard() {
     const [notificationApi, contextHolder] = notification.useNotification();
     const { accountState } = useAccount();
     const { rentalProfileState } = useRentalProfile();
+    const screens = Grid.useBreakpoint();
+    const isSmallScreen = !screens.md;
     const token = accountState.accountDetails?.token ?? "";
     const rentalProfileId = rentalProfileState.rentalProfile?.id;
     const [bookings, setBookings] = useState<ViewingBookingDetailsDTO[]>([]);
@@ -180,6 +184,58 @@ export default function ViewingsDashboard() {
         [bookings, statusFilter],
     );
 
+    const renderBookingActions = (booking: ViewingBookingDetailsDTO) => {
+        const updating = updatingBookingIds.has(booking.id);
+        if (booking.status === ViewingBookingStatus.PENDING) {
+            return (
+                <Space wrap>
+                    <Popconfirm
+                        title="Approve this viewing?"
+                        onConfirm={() => updateBooking(booking, "approve")}
+                    >
+                        <Button
+                            type="primary"
+                            size="small"
+                            loading={updating}
+                            disabled={booking.paymentStatus !== ViewingPaymentStatus.PAID && booking.serviceFee > 0}
+                            title={booking.paymentStatus !== ViewingPaymentStatus.PAID
+                                ? "Payment must be completed before approval."
+                                : undefined}
+                        >
+                            Approve
+                        </Button>
+                    </Popconfirm>
+                    <Popconfirm
+                        title="Reject this viewing?"
+                        onConfirm={() => updateBooking(booking, "reject")}
+                    >
+                        <Button danger size="small" loading={updating}>Reject</Button>
+                    </Popconfirm>
+                </Space>
+            );
+        }
+
+        if (booking.status === ViewingBookingStatus.CONFIRMED) {
+            return (
+                <Space wrap>
+                    <Button size="small" onClick={() => openOutcomeModal(booking)} disabled={updating}>
+                        Record outcome
+                    </Button>
+                    <Popconfirm
+                        title="Cancel this confirmed viewing?"
+                        onConfirm={() => updateBooking(booking, "cancel")}
+                    >
+                        <Button danger size="small" loading={updating}>Cancel</Button>
+                    </Popconfirm>
+                </Space>
+            );
+        }
+
+        return booking.outcome
+            ? <Text type="secondary">{formatEnum(booking.outcome.type)}</Text>
+            : <Text type="secondary">—</Text>;
+    };
+
     const columns: TableProps<ViewingBookingDetailsDTO>["columns"] = [
         {
             title: "Viewing",
@@ -188,7 +244,6 @@ export default function ViewingsDashboard() {
                 <Flex vertical>
                     <Text strong>{formatDateTime(booking.startTime)}</Text>
                     <Text type="secondary">Until {formatDateTime(booking.endTime)}</Text>
-                    <Text type="secondary">Reference: {booking.reference}</Text>
                 </Flex>
             ),
         },
@@ -236,57 +291,7 @@ export default function ViewingsDashboard() {
         {
             title: "Actions",
             key: "actions",
-            render: (_, booking) => {
-                const updating = updatingBookingIds.has(booking.id);
-                if (booking.status === ViewingBookingStatus.PENDING) {
-                    return (
-                        <Space wrap>
-                            <Popconfirm
-                                title="Approve this viewing?"
-                                onConfirm={() => updateBooking(booking, "approve")}
-                            >
-                                <Button
-                                    type="primary"
-                                    size="small"
-                                    loading={updating}
-                                    disabled={booking.paymentStatus !== ViewingPaymentStatus.PAID}
-                                    title={booking.paymentStatus !== ViewingPaymentStatus.PAID
-                                        ? "Payment must be completed before approval."
-                                        : undefined}
-                                >
-                                    Approve
-                                </Button>
-                            </Popconfirm>
-                            <Popconfirm
-                                title="Reject this viewing?"
-                                onConfirm={() => updateBooking(booking, "reject")}
-                            >
-                                <Button danger size="small" loading={updating}>Reject</Button>
-                            </Popconfirm>
-                        </Space>
-                    );
-                }
-
-                if (booking.status === ViewingBookingStatus.CONFIRMED) {
-                    return (
-                        <Space wrap>
-                            <Button size="small" onClick={() => openOutcomeModal(booking)} disabled={updating}>
-                                Record outcome
-                            </Button>
-                            <Popconfirm
-                                title="Cancel this confirmed viewing?"
-                                onConfirm={() => updateBooking(booking, "cancel")}
-                            >
-                                <Button danger size="small" loading={updating}>Cancel</Button>
-                            </Popconfirm>
-                        </Space>
-                    );
-                }
-
-                return booking.outcome
-                    ? <Text type="secondary">{formatEnum(booking.outcome.type)}</Text>
-                    : <Text type="secondary">—</Text>;
-            },
+            render: (_, booking) => renderBookingActions(booking),
         },
     ];
 
@@ -346,36 +351,98 @@ export default function ViewingsDashboard() {
                                 ]}
                             />
                         </Flex>
-                        <Table<ViewingBookingDetailsDTO>
-                            rowKey="id"
-                            columns={columns}
-                            dataSource={filteredBookings}
-                            loading={loading}
-                            locale={{ emptyText: "No viewing bookings found." }}
-                            expandable={{
-                                expandedRowRender: (booking) => (
-                                    <Descriptions size="small" column={{ xs: 1, sm: 2 }}>
-                                        <Descriptions.Item label="Notes">{booking.notes || "—"}</Descriptions.Item>
-                                        <Descriptions.Item label="Payment updated">
-                                            {booking.paymentUpdatedAt ? formatDateTime(booking.paymentUpdatedAt) : "—"}
-                                        </Descriptions.Item>
-                                        {booking.holdExpiresAt && (
-                                            <Descriptions.Item label="Hold expires">
-                                                {formatDateTime(booking.holdExpiresAt)}
+                        {isSmallScreen ? (
+                            <List<ViewingBookingDetailsDTO>
+                                rowKey="id"
+                                dataSource={filteredBookings}
+                                loading={loading}
+                                locale={{ emptyText: "No viewing bookings found." }}
+                                pagination={{ pageSize: 6, showSizeChanger: true, responsive: true }}
+                                grid={{ gutter: 12, xs: 1, sm: 2 }}
+                                renderItem={(booking) => (
+                                    <List.Item>
+                                        <Card
+                                            size="small"
+                                            title={
+                                                <Flex justify="space-between" align="center" gap="small" wrap="wrap">
+                                                    <Text strong>{formatDateTime(booking.startTime)}</Text>
+                                                    <Tag color={statusColors[booking.status]}>
+                                                        {formatEnum(booking.status)}
+                                                    </Tag>
+                                                </Flex>
+                                            }
+                                            style={{ width: "100%", height: "100%" }}
+                                        >
+                                            <Flex vertical gap="middle">
+                                                <Descriptions size="small" column={1}>
+                                                    <Descriptions.Item label="Ends">
+                                                        {formatDateTime(booking.endTime)}
+                                                    </Descriptions.Item>
+                                                    <Descriptions.Item label="Unit">
+                                                        Unit #{booking.unitId}
+                                                    </Descriptions.Item>
+                                                    <Descriptions.Item label="Requester">
+                                                        User #{booking.requesterUserId}
+                                                    </Descriptions.Item>
+                                                    <Descriptions.Item label="Service fee">
+                                                        {new Intl.NumberFormat(undefined, {
+                                                            style: "currency",
+                                                            currency: "TZS",
+                                                        }).format(booking.serviceFee)}
+                                                    </Descriptions.Item>
+                                                    <Descriptions.Item label="Payment">
+                                                        <Tag color={paymentColors[booking.paymentStatus]}>
+                                                            {formatEnum(booking.paymentStatus)}
+                                                        </Tag>
+                                                    </Descriptions.Item>
+                                                    {booking.notes && (
+                                                        <Descriptions.Item label="Notes">{booking.notes}</Descriptions.Item>
+                                                    )}
+                                                    {booking.outcome && (
+                                                        <Descriptions.Item label="Outcome">
+                                                            {formatEnum(booking.outcome.type)}
+                                                            {booking.outcome.notes ? ` — ${booking.outcome.notes}` : ""}
+                                                        </Descriptions.Item>
+                                                    )}
+                                                </Descriptions>
+                                                {renderBookingActions(booking)}
+                                            </Flex>
+                                        </Card>
+                                    </List.Item>
+                                )}
+                            />
+                        ) : (
+                            <Table<ViewingBookingDetailsDTO>
+                                rowKey="id"
+                                columns={columns}
+                                dataSource={filteredBookings}
+                                loading={loading}
+                                locale={{ emptyText: "No viewing bookings found." }}
+                                expandable={{
+                                    expandedRowRender: (booking) => (
+                                        <Descriptions size="small" column={{ xs: 1, sm: 2 }}>
+                                            <Descriptions.Item label="Notes">{booking.notes || "—"}</Descriptions.Item>
+                                            <Descriptions.Item label="Payment updated">
+                                                {booking.paymentUpdatedAt ? formatDateTime(booking.paymentUpdatedAt) : "—"}
                                             </Descriptions.Item>
-                                        )}
-                                        {booking.outcome?.notes && (
-                                            <Descriptions.Item label="Outcome notes">{booking.outcome.notes}</Descriptions.Item>
-                                        )}
-                                    </Descriptions>
-                                ),
-                                rowExpandable: (booking) => Boolean(
-                                    booking.notes || booking.paymentUpdatedAt || booking.holdExpiresAt || booking.outcome?.notes,
-                                ),
-                            }}
-                            scroll={{ x: 900 }}
-                            pagination={{ pageSize: 10, showSizeChanger: true }}
-                        />
+                                            {booking.holdExpiresAt && (
+                                                <Descriptions.Item label="Hold expires">
+                                                    {formatDateTime(booking.holdExpiresAt)}
+                                                </Descriptions.Item>
+                                            )}
+                                            {booking.outcome?.notes && (
+                                                <Descriptions.Item label="Outcome notes">{booking.outcome.notes}</Descriptions.Item>
+                                            )}
+                                        </Descriptions>
+                                    ),
+                                    rowExpandable: (booking) => Boolean(
+                                        booking.notes || booking.paymentUpdatedAt || booking.holdExpiresAt || booking.outcome?.notes,
+                                    ),
+                                }}
+                                scroll={{ x: 900 }}
+                                pagination={{ pageSize: 10, showSizeChanger: true }}
+                            />
+                        )}
                     </Card>
                 )}
             </Flex>
