@@ -236,35 +236,44 @@ export default function PropertiesDashboard() {
         );
     };
 
-    const renderBuilding = (building: BuildingDetailsDTO, property: PropertyDetailsDTO) => (
-        <Card
-            key={building.id}
-            size="small"
-            title={building.name || building.code || `Building ${building.id}`}
-            extra={(
-                <Button
-                    icon={<PlusOutlined />}
-                    onClick={() => setCreateUnitBuilding(building)}
-                >
-                    Add Unit
-                </Button>
-            )}
-        >
-            {building.description && (
-                <Text type="secondary">{building.description}</Text>
-            )}
-            {building.units?.length ? (
-                <List
-                    size="small"
-                    dataSource={building.units}
-                    rowKey="id"
-                    renderItem={(unit) => renderUnit(unit, property, building)}
-                />
-            ) : (
-                <Text type="secondary">No units in this building yet.</Text>
-            )}
-        </Card>
-    );
+    const renderBuilding = (building: BuildingDetailsDTO, property: PropertyDetailsDTO) => ({
+        key: String(building.id),
+        label: (
+            <Flex justify="space-between" align="center" wrap="wrap" gap="small">
+                <Text strong>{building.name || building.code || `Building ${building.id}`}</Text>
+                <Flex gap="small" wrap="wrap">
+                    {building.code && <Tag>{building.code}</Tag>}
+                    <Tag>{building.units?.length ?? 0} {(building.units?.length ?? 0) === 1 ? "unit" : "units"}</Tag>
+                    <Tag>{building.numberOfFloors} {building.numberOfFloors === 1 ? "floor" : "floors"}</Tag>
+                </Flex>
+            </Flex>
+        ),
+        children: (
+            <Flex vertical gap="middle">
+                {building.description && (
+                    <Text type="secondary">{building.description}</Text>
+                )}
+                <div>
+                    <Button
+                        icon={<PlusOutlined />}
+                        onClick={() => setCreateUnitBuilding(building)}
+                    >
+                        Add Unit
+                    </Button>
+                </div>
+                {building.units?.length ? (
+                    <List
+                        size="small"
+                        dataSource={building.units}
+                        rowKey="id"
+                        renderItem={(unit) => renderUnit(unit, property, building)}
+                    />
+                ) : (
+                    <Text type="secondary">No units in this building yet.</Text>
+                )}
+            </Flex>
+        ),
+    });
 
     const propertyItems = properties.map((property) => {
         const address = property.location?.address;
@@ -304,9 +313,7 @@ export default function PropertiesDashboard() {
                         )}
                     </Descriptions>
                     {buildingTotal ? (
-                        <Flex vertical gap="middle">
-                            {(property.buildings ?? []).map((building) => renderBuilding(building, property))}
-                        </Flex>
+                        <Collapse items={(property.buildings ?? []).map((building) => renderBuilding(building, property))} />
                     ) : (
                         <Alert
                             type="info"

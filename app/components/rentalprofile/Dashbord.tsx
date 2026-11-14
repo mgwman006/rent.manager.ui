@@ -1,15 +1,10 @@
 import {
-  ArrowRightOutlined,
-  BankOutlined,
-  BellOutlined,
   BookOutlined,
   CalendarOutlined,
-  HomeOutlined,
   HomeTwoTone,
   RightOutlined,
-  TeamOutlined,
 } from "@ant-design/icons";
-import { Alert, Avatar, Badge, Button, Card, Col, DatePicker, Flex, Form, Input, Modal, notification, Progress, Row, Select, Tag, Typography } from "antd";
+import { Alert, Avatar, Button, Card, Col, DatePicker, Flex, Form, Modal, notification, Progress, Row, Select, Tag, Typography } from "antd";
 import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext";
 import { RentalProfileDetailsDTO, RentalProfileType } from "../../models/rentalprofile";
 import { useEffect, useState } from "react";
@@ -17,13 +12,11 @@ import { useNavigate } from "react-router";
 import { useAccount } from "../../store/account/AccountContext";
 import { rentalProfileApi } from "../../api/api";
 import { handleApiError } from "../../utilities/error-handler";
-import Invitations from "../invitation/Invitations";
-import { getActiveInvitations } from "../../services/invitationService";
-import { LeaseInvitationDetailsDTO } from "../../models/user";
 import { getLeasesAllLeases, getMonthlyCollectionSummary } from "../../services/leaseService";
 import { MonthlyCollectionSummaryDTO } from "../../models/lease";
 import dayjs from "dayjs";
 import { isTokenExpired } from "../../utilities/auth";
+import { getViewingBookings } from "../../services/viewingService";
 
 const { Meta } = Card;
 const { Title, Text } = Typography;
@@ -42,11 +35,10 @@ export default function Dashboard() {
   const organizationMemberships = (accountState.accountDetails?.userDetails?.memberships ?? [])
     .filter((membership) => Number.isSafeInteger(membership.organizationId) && membership.organizationId > 0);
   const [leaseCount, setLeaseCount] = useState(0);
-  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
-  const [invitesCount,setInvitesCount] = useState<number>(0);
-  const [invitations, setInvitations] = useState<LeaseInvitationDetailsDTO[]>([]);
+  const [viewingCount, setViewingCount] = useState<number | null>(null);
+  const [viewingCountsLoading, setViewingCountsLoading] = useState(false);
   const [monthlyCollectionSummary, setMonthlyCollectionSummary] = useState<MonthlyCollectionSummaryDTO>();
 
 
@@ -115,23 +107,6 @@ const navigateToAuth = (nextApp: string = "rent-manager", phone?: string) => {
     setLeaseCount(data.length);
   };
 
-  const loadInvitations = async (phoneNumber: string, token: string) =>
-  {
-    if(!phoneNumber)
-    {
-      notificationApi.error({
-        message: "Fail to load invites", 
-        description: `Phone number is ${phoneNumber}`
-      });
-      navigate("/");
-      return;
-    }
-
-    const invites = await getActiveInvitations(phoneNumber,token ?? "",notificationApi);
-    setInvitesCount(invites.length)
-    setInvitations(invites);
-  }
-
   const loadCurrentMonthCollectionSummary = async (
     rentalProfileId: number,
     month: number,
@@ -153,15 +128,20 @@ const navigateToAuth = (nextApp: string = "rent-manager", phone?: string) => {
     }
 };
 
+  const rentalProfileId = rentalProfileState.rentalProfile?.id;
+  const token = accountState.accountDetails?.token;
+
   useEffect(() => {
-    const jwtToken = accountState.accountDetails?.token;
     const currentProfile = rentalProfileState.rentalProfile;
 
-    if (!jwtToken || !currentProfile || currentProfile==null) {
+    if (!token || !currentProfile) {
+      setRentalProfile(null);
+      setLeaseCount(0);
+      setMonthlyCollectionSummary(undefined);
       return;
     }
 
-    if (isTokenExpired(jwtToken)) {
+    if (isTokenExpired(token)) {
         notificationApi.error({
           message: "Session expired",
           description: "Your sign-in session has expired. Please sign in again.",
@@ -172,23 +152,37 @@ const navigateToAuth = (nextApp: string = "rent-manager", phone?: string) => {
       }
 
     setRentalProfile(currentProfile);
-    loadLeasesCount(currentProfile.id, jwtToken);
+    loadLeasesCount(currentProfile.id, token);
 
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1; // JS months are 0-based
-    loadCurrentMonthCollectionSummary(currentProfile.id, currentMonth,currentYear,jwtToken);
-  }, []);
+    loadCurrentMonthCollectionSummary(currentProfile.id, currentMonth, currentYear, token);
+  }, [notificationApi, rentalProfileId, token]);
 
   useEffect(() => {
-    const token = accountState.accountDetails?.token;
-
-    if (!rentalProfile?.phoneNumber || !token) {
-        return;
+    let cancelled = false;
+    if (!rentalProfileId || !token) {
+      setViewingCount(null);
+      setViewingCountsLoading(false);
+      return () => {
+        cancelled = true;
+      };
     }
 
-    loadInvitations(rentalProfile?.phoneNumber, token);
-}, [rentalProfile?.phoneNumber, accountState.accountDetails?.token]);
+    setViewingCount(null);
+    setViewingCountsLoading(true);
+    getViewingBookings(rentalProfileId, token, notificationApi).then((bookings) => {
+      if (cancelled || bookings === null) return;
+      setViewingCount(bookings.length);
+    }).finally(() => {
+      if (!cancelled) setViewingCountsLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [notificationApi, rentalProfileId, token]);
 
 const summaryCards = [
     { 
@@ -200,24 +194,15 @@ const summaryCards = [
     },
     {
       title: "Viewings",
-      value: "Review and manage unit viewing requests",
+      value: viewingCount !== null
+        ? viewingCount
+        : viewingCountsLoading
+          ? "..."
+          : "—",
       icon: <CalendarOutlined />,
       color: "#FFF7E8",
       onClick: () => navigate("viewings"),
     },
-    {
-      title: "Invitations",
-      value: `You have ${invitesCount} invitaions to respond`,
-      icon: <Badge count={invitesCount}><BellOutlined /></Badge>,    
-      color: "#EDF4FF",
-      buttonStyle: { backgroundColor: "info", borderColor: "#EDF4FF", color: "#fff" },
-      buttonText: "View more",
-      buttonIcon: <ArrowRightOutlined />,
-      onClick: () => setIsInviteModalOpen(true),
-    },
-    //   { title: "Tenants", value: 0, icon: <TeamOutlined />, color: "#f59e0b" },
-    //   { title: "Properties", value: 0, icon: <HomeOutlined />, color: "#22c55e" },
-    //   { title: "Units", value: 0, icon: <BankOutlined />, color: "#2563eb" },
     ];
 
   return (
@@ -269,23 +254,6 @@ const summaryCards = [
           </Col>
         ))}
       </Row>
-
-      <Modal
-          title="Invitations"
-          open={isInviteModalOpen}
-          onCancel={() => setIsInviteModalOpen(false)}
-          footer={null}
-          width={{
-                    xs: '100%',
-                    sm: '90%',
-                    md: '80%',
-                    lg: '50%',
-                    xl: '50%',
-                    xxl: '50%',
-                }}
-      >
-          <Invitations phoneNumber={rentalProfile?.phoneNumber ?? ""} jwtToken={accountState.accountDetails?.token} />
-      </Modal>
 
       <Modal
         title="Upgrade to Business"
