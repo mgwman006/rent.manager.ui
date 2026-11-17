@@ -1,8 +1,7 @@
 
 import {Button, Card, Col, Empty, Modal, Row, Spin, Typography, notification} from "antd";
 import {ArrowRightOutlined, PlusOutlined} from "@ant-design/icons";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { AccountState } from "../models/user";
+import { useNavigate } from "react-router-dom";
 import { useAccount } from "../store/account/AccountContext";
 import { useEffect, useState } from "react";
 import { RentalProfileDetailsDTO } from "../models/rentalprofile";
@@ -24,8 +23,6 @@ const OFF = "#F8FAFC";
 
 export default function HomePage() 
 {
-  const [searchParams] = useSearchParams();
-  const accountStateString = searchParams.get("state");
   const [notificationApi, contextHolder] = notification.useNotification();
   const { accountState, dispatchAccountState } = useAccount();
   const [rentalProfiles, setRentalProfiles] = useState<RentalProfileDetailsDTO[]>([]);
@@ -66,30 +63,15 @@ export default function HomePage()
   }
 
   useEffect(() => {
-    let userId: number;
-    let organizationId: number;
-    let token: string;
-    let accountDetails = accountState.accountDetails;
-
-    if (accountStateString) {
-      const receivedAccountState: AccountState = JSON.parse(accountStateString);
-      const newDetails = receivedAccountState.accountDetails;
-      
-      if (newDetails && newDetails.userDetails) {
-        dispatchAccountState({ type: "FETCH_SUCCESS", payload: newDetails });
-        accountDetails = newDetails;
-      }
-    }
-
-    userId = accountDetails?.userDetails?.id ?? 0;
-    organizationId = accountDetails?.userDetails?.memberships[0]?.organizationId ?? 0;
-    token = accountDetails?.token ?? "";
-    
+    const accountDetails = accountState.accountDetails;
+    const userId = accountDetails?.userDetails?.id ?? 0;
+    const organizationId = accountDetails?.userDetails?.memberships?.[0]?.organizationId ?? 0;
+    const token = accountDetails?.token ?? "";
 
     if (isTokenExpired(token)) {
       notificationApi.error({
         message: "Session expired",
-        description: "Your sign-in session has expired. Please sign in again.",
+        description: accountState.error ?? "Your sign-in session has expired. Please sign in again.",
       });
       dispatchAccountState({ type: "LOGOUT" });
       navigateToAuth();
@@ -105,7 +87,7 @@ export default function HomePage()
     );
       
     
-  }, []);
+  }, [accountState.accountDetails, accountState.error, dispatchAccountState, notificationApi]);
 
  
 
