@@ -2,6 +2,7 @@ import axios from "axios";
 import { ApiResponse } from "../models/common";
 import { ApiError } from "../models/error";
 import { PropertyCreateDTO, PropertyDetailsDTO, UnitCreateDTO, UnitDetailsDTO, UnitSummaryDTO } from "../models/property";
+import { handleApiResponseError } from "../utilities/error-handler";
 
 const propertyManagerApiUrl = import.meta.env.VITE_PROPERTY_MANAGER_API_URL
 const propertyManagerApiClient = axios.create({
@@ -13,36 +14,11 @@ const propertyManagerApiClient = axios.create({
 
 propertyManagerApiClient.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response) {
-            const { message, data, statusCode } = error.response.data ?? {};
-            return Promise.reject(
-                new ApiError({
-                    message: message ?? "SERVER_ERROR",
-                    data: data ?? null,
-                    statusCode: statusCode ?? error.response.status,
-                }),
-            );
-        }
-
-        if (error.request) {
-            return Promise.reject(
-                new ApiError({
-                    message: "NETWORK_ERROR",
-                    data: "No response from property manager service",
-                    statusCode: 0,
-                }),
-            );
-        }
-
-        return Promise.reject(
-            new ApiError({
-                message: "CLIENT_ERROR",
-                data: "Unexpected property manager client error",
-                statusCode: 0,
-            }),
-        );
-    },
+    (error: unknown) => handleApiResponseError(
+        error,
+        "No response from property manager service",
+        "Unexpected property manager client error",
+    ),
 );
 
 export const propertyManagerApi = {

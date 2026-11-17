@@ -26,18 +26,19 @@ export function isTokenExpired(token?: string): boolean {
   }
 }
 
-export const navigateToAuth = (nextApp: string = "rent-manager", phone?: string): void => {
+export const navigateToAuth = (nextApp: string = "rent-manager", phone?: string): boolean => {
   if (!authUrl) {
     console.error("VITE_AUTH_URL is not configured.");
-    return;
+    return false;
   }
 
   const outGoingUrlValue = nextApp === "rent-manager" ? rentManagerUrl : null;
   if (!outGoingUrlValue) {
     console.error("Unable to resolve outgoing URL for auth redirect.");
-    return;
+    return false;
   }
 
   const url = `${authUrl}?outGoingUrl=${encodeURIComponent(outGoingUrlValue)}&phoneNumber=${encodeURIComponent(phone ?? "")}`;
   window.location.href = url;
+  return true;
 };

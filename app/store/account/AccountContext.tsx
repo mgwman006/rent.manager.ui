@@ -1,16 +1,47 @@
-import React, {createContext, useContext, useEffect, useMemo, useReducer} from "react";
-import { AccountState } from "../../models/user";
+import React, {createContext, useContext, useLayoutEffect, useMemo, useReducer} from "react";
+import { AccountAction, AccountDetailsDto, AccountState } from "../../models/user";
 import { ACCOUNT_STORAGE_KEY } from "../../utilities/constant";
 import { accountReducer } from "./accountReducer";
 
 type AccountContextType = {
   accountState: AccountState;
-  dispatchAccountState: React.Dispatch<any>;
+  dispatchAccountState: React.Dispatch<AccountAction>;
 };
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
 
 const loadInitialState = (): AccountState => {
+  const defaultState: AccountState = {
+    accountDetails: null,
+    loading: false,
+    error: null,
+    outGoingUrl: null,
+  };
+  const callbackState = new URLSearchParams(window.location.search).get("state");
+
+  if (callbackState !== null) {
+    try {
+      const parsed: unknown = JSON.parse(callbackState);
+      if (typeof parsed !== "object" || parsed === null || !("accountDetails" in parsed)) {
+        throw new Error("Missing account details");
+      }
+      const details = parsed.accountDetails;
+      if (
+        typeof details !== "object" || details === null
+        || !("token" in details) || typeof details.token !== "string" || !details.token
+        || !("userDetails" in details) || typeof details.userDetails !== "object" || details.userDetails === null
+        || !("id" in details.userDetails) || typeof details.userDetails.id !== "number"
+      ) {
+        throw new Error("Missing token or user details");
+      }
+
+      return { ...defaultState, accountDetails: details as AccountDetailsDto };
+    } catch (error) {
+      console.error("Failed to load sign-in response", error);
+      return { ...defaultState, error: "The sign-in response was invalid. Please sign in again." };
+    }
+  }
+
   try 
   {
     const stored = localStorage.getItem(ACCOUNT_STORAGE_KEY);
@@ -30,18 +61,13 @@ const loadInitialState = (): AccountState => {
     console.error("Failed to load state", error);
   }
 
-  return {
-    accountDetails: null,
-    loading: false,
-    error: null,
-    outGoingUrl: null
-  };
+  return defaultState;
 };
 
 export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(accountReducer, undefined,loadInitialState);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     try 
     {
       if(state.accountDetails)
@@ -51,6 +77,12 @@ export const AccountProvider: React.FC<{ children: React.ReactNode }> = ({ child
       else
       {
         localStorage.removeItem(ACCOUNT_STORAGE_KEY);
+      }
+
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("state")) {
+        url.searchParams.delete("state");
+        window.history.replaceState(window.history.state, "", url);
       }
     } 
     catch (e) 

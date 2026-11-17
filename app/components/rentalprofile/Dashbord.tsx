@@ -23,6 +23,7 @@ const { Title, Text } = Typography;
 
 const authUrl = import.meta.env.VITE_AUTH_URL?.trim();
 const rentManagerUrl = import.meta.env.VITE_RENT_MANAGER_URL?.trim();
+const userManagerUrl = import.meta.env.VITE_USER_MANAGER_URL?.trim();
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ const navigateToAuth = (nextApp: string = "rent-manager", phone?: string) => {
       return;
     }
 
-    const outGoingUrlValue = nextApp === "rent-manager" ? rentManagerUrl : null;
+    const outGoingUrlValue = nextApp === "rent-manager" ? rentManagerUrl : nextApp === "user-manager" ? userManagerUrl : null;
     if (!outGoingUrlValue) {
       console.error("Unable to resolve outgoing URL for auth redirect.");
       return;
@@ -273,7 +274,7 @@ const summaryCards = [
             <Button
               type="primary"
               style={{ marginTop: 16 }}
-              onClick={() => navigateToAuth("rent-manager", accountState.accountDetails?.phoneNumber)}
+              onClick={() => navigateToAuth("user-manager", accountState.accountDetails?.phoneNumber)}
             >
               Create organization
             </Button>
