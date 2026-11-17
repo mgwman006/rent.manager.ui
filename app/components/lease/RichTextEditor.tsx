@@ -48,9 +48,14 @@ export const sanitizeRichText = (html: string): string => {
 interface RichTextEditorProps {
     value?: string;
     onChange?: (value: string) => void;
+    ariaLabel?: string;
 }
 
-export default function RichTextEditor({ value = "", onChange }: RichTextEditorProps) {
+export default function RichTextEditor({
+    value = "",
+    onChange,
+    ariaLabel = "Lease terms and conditions",
+}: RichTextEditorProps) {
     const editorRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -84,7 +89,7 @@ export default function RichTextEditor({ value = "", onChange }: RichTextEditorP
                 ref={editorRef}
                 contentEditable
                 role="textbox"
-                aria-label="Lease terms and conditions"
+                aria-label={ariaLabel}
                 aria-multiline="true"
                 onInput={(event) => onChange?.(sanitizeRichText(event.currentTarget.innerHTML))}
                 style={{

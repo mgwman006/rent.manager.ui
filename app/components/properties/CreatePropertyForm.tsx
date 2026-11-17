@@ -5,6 +5,7 @@ import { useRentalProfile } from "../../store/rentalprofile/RentalProfileContext
 import { useAccount } from "../../store/account/AccountContext";
 import { NotificationInstance } from "antd/es/notification/interface";
 import { createProperty } from "../../services/propertyService";
+import RichTextEditor, { sanitizeRichText } from "../lease/RichTextEditor";
 
 interface CreatePropertyFormProps {
     open: boolean;
@@ -38,7 +39,11 @@ export default function CreatePropertyForm({
     }, [createdByUserId, form, open]);
 
     const handleFinish = async (values: PropertyCreateDTO) => {
-        const created = await handleCreateProperty({ ...values, createdByUserId });
+        const created = await handleCreateProperty({
+            ...values,
+            description: values.description ? sanitizeRichText(values.description) : undefined,
+            createdByUserId,
+        });
         if (created) {
             form.resetFields();
             onCancel();
@@ -104,7 +109,7 @@ export default function CreatePropertyForm({
                     <Input />
                 </Form.Item>
                 <Form.Item name="description" label="Description">
-                    <Input.TextArea rows={3} />
+                    <RichTextEditor ariaLabel="Property description" />
                 </Form.Item>
 
                 <Form.Item
@@ -167,17 +172,15 @@ export default function CreatePropertyForm({
                 <Form.Item
                     name={["location", "address", "postalCode"]}
                     label="Postal Code"
-                    rules={[{ required: true, message: "Enter the postal code." }]}
                 >
-                    <Input />
+                    <InputNumber min={0} style={{ width: "100%" }} />
                 </Form.Item>
                 
                 <Form.Item
-                    name={["location", "address", "streetNumber"]}
-                    label="Street Number"
-                    rules={[{ required: true, message: "Enter the street number." }]}
+                    name={["location", "address", "houseNumber"]}
+                    label="House Number"
                 >
-                    <Input />
+                    <InputNumber min={0} style={{ width: "100%" }} />
                 </Form.Item>
 
                 <Form.Item

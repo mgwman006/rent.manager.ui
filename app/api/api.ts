@@ -5,6 +5,7 @@ import { MembershipDetailsDTO, LeaseInvitationCreateDTO, LeaseInvitationDetailsD
 import { CreateRentalProfileDTO, RentalProfileDetailsDTO } from '../models/rentalprofile';
 import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, MonthlyCollectionSummaryDTO, RentSummaryDTO, UpdateLeaseDatesDTO, UpdateLeaseRentDTO } from '../models/lease';
 import { PaymentTransactionCreateDTO } from '../models/payments';
+import { RecordViewingOutcomeDTO, ViewingBookingDetailsDTO } from '../models/viewing';
 import { recordPayment } from '../services/paymentService';
 
 const apiUrl = import.meta.env.VITE_RENT_MANAGER_API_URL;
@@ -306,6 +307,81 @@ export const leaseInvitationApi = {
 
     return handleResponse(res.data);
   }
+};
+
+export const viewingApi = {
+  getBookingsByRentalProfile: async (rentalProfileId: number, token: string) => {
+    const res = await apiClient.get<ApiResponse<ViewingBookingDetailsDTO[]>>(
+      `/viewings/bookings/by-rental-profile/${rentalProfileId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  approveBooking: async (bookingId: number, token: string) => {
+    const res = await apiClient.patch<ApiResponse<ViewingBookingDetailsDTO>>(
+      `/viewings/bookings/${bookingId}/approve`,
+      null,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  rejectBooking: async (bookingId: number, token: string) => {
+    const res = await apiClient.patch<ApiResponse<ViewingBookingDetailsDTO>>(
+      `/viewings/bookings/${bookingId}/reject`,
+      null,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  cancelBooking: async (bookingId: number, token: string) => {
+    const res = await apiClient.patch<ApiResponse<ViewingBookingDetailsDTO>>(
+      `/viewings/bookings/${bookingId}/cancel`,
+      null,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return handleResponse(res.data);
+  },
+
+  recordOutcome: async (
+    bookingId: number,
+    requestBody: RecordViewingOutcomeDTO,
+    token: string,
+  ) => {
+    const res = await apiClient.patch<ApiResponse<ViewingBookingDetailsDTO>>(
+      `/viewings/bookings/${bookingId}/outcome`,
+      requestBody,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return handleResponse(res.data);
+  },
 };
 
 export const paymentApi = {

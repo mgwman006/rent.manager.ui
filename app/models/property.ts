@@ -64,8 +64,8 @@ export interface LocationCreateDTO {
 }
 
 export interface AddressDTO {
-  postalCode: number;
-  streetNumber: number;
+  postalCode?: number | null;
+  houseNumber?: number | null;
   streetName: string;
   ward: string;
   city: string;
