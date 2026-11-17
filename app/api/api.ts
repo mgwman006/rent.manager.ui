@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { ApiResponse } from '../models/common';
-import { ApiError } from '../models/error';
+import { handleApiResponseError } from '../utilities/error-handler';
 import { MembershipDetailsDTO, LeaseInvitationCreateDTO, LeaseInvitationDetailsDTO } from '../models/user';
 import { CreateRentalProfileDTO, RentalProfileDetailsDTO } from '../models/rentalprofile';
 import { LeaseCreateDTO, LeaseDetailsDTO, LeaseStatus, LeaseTermsUpdateDTO, MonthlyCollectionSummaryDTO, RentSummaryDTO, UpdateLeaseDatesDTO, UpdateLeaseRentDTO } from '../models/lease';
@@ -21,37 +21,7 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response) {
-      const { message, data, statusCode } = error.response.data;
-
-      return Promise.reject(
-        new ApiError({
-          message: message ?? "SERVER_ERROR",
-          data: data ?? null,
-          statusCode: statusCode ?? error.response.status,
-        })
-      );
-    }
-
-    if (error.request) {
-      return Promise.reject(
-        new ApiError({
-          message: "NETWORK_ERROR",
-          data: "No response from server",
-          statusCode: 0,
-        })
-      );
-    }
-
-    return Promise.reject(
-      new ApiError({
-        message: "CLIENT_ERROR",
-        data: "Unexpected error occurred",
-        statusCode: 0,
-      })
-    );
-  }
+  (error: unknown) => handleApiResponseError(error, "No response from server", "Unexpected error occurred"),
 );
 
 

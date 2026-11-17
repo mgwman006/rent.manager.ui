@@ -30,6 +30,7 @@ import { useRentalProfile } from '../store/rentalprofile/RentalProfileContext';
 import { useAccount } from '../store/account/AccountContext';
 import { RentalProfileDetailsDTO } from '../models/rentalprofile';
 import { getRentalProfilesByUserOrOrganization } from '../services/rentalProfileService';
+import { isTokenExpired } from '../utilities/auth';
 
 const { Header, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -58,8 +59,9 @@ export default function AppLayout() {
 
   useEffect(() => {
     let cancelled = false;
-    if (!userDetails?.id || !token) {
+    if (!userDetails?.id || !token || isTokenExpired(token)) {
       setRentalProfiles([]);
+      setLoadingProfiles(false);
       return () => {
         cancelled = true;
       };
