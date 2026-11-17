@@ -8,6 +8,7 @@ import Dashboard from "./components/rentalprofile/Dashbord";
 import InvitationDetails from "./components/invitation/InvitationDetails";
 import CreateLease from "./components/lease/CreateLease";
 import PropertiesDashboard from "./components/properties/PropertiesDashboard";
+import ViewingsDashboard from "./components/lease/ViewingsDashboard";
 const routes = [
   {
     path: "/",
@@ -50,6 +51,10 @@ const routes = [
           {
             path: "properties",
             Component: PropertiesDashboard,
+          },
+          {
+            path: "viewings",
+            Component: ViewingsDashboard,
           }
         ]
       }
